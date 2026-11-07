@@ -75,11 +75,8 @@ export default function AdNativeBanner({
     <aside
       ref={containerRef}
       aria-label="Native Advertisement"
-      className={`relative w-full max-w-4xl mx-auto my-6 p-2 rounded-xl bg-gray-900/40 border border-gray-800/80 flex flex-col items-center justify-center min-h-[140px] ${className}`}
+      className={`relative w-full max-w-4xl mx-auto my-6 p-2 rounded-xl bg-gray-900/40 border border-gray-800/80 flex flex-col items-center justify-center min-h-[120px] ${className}`}
     >
-      <span className="text-[9px] uppercase font-bold tracking-widest text-gray-500 mb-1.5 self-center select-none">
-        Sponsored Content (Native 4:1)
-      </span>
       {shouldLoad ? (
         <iframe
           title="ad-native-4-1"
