@@ -65,6 +65,11 @@ export default function ContentDetailView({ content }: ContentDetailViewProps) {
                 {content.type === "tv-series" ? "Mulai Nonton (Ep 1)" : "Tonton Film Sekarang"}
               </span>
             </Link>
+
+            {/* Ads: 160x600 Skyscraper sponsor di bawah poster */}
+            <div className="hidden md:flex justify-center mt-6">
+              <AdSlot type="160x600" slotName="Detail Skyscraper Sponsor" />
+            </div>
           </div>
 
           {/* Right: Info Details */}

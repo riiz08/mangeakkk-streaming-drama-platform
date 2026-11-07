@@ -69,6 +69,7 @@ export default function Footer() {
               <li><a href="#" className="hover:text-brand-500 transition-colors">Kebijakan Privasi</a></li>
               <li><a href="#" className="hover:text-brand-500 transition-colors">Ketentuan Layanan</a></li>
               <li><a href="#" className="hover:text-brand-500 transition-colors">Pasang Iklan</a></li>
+              <li><Link href="/admin" className="text-zinc-500 hover:text-brand-400 transition-colors">Admin Console</Link></li>
             </ul>
           </div>
         </div>

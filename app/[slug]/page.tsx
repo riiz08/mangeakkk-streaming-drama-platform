@@ -48,3 +48,4 @@ export default async function ContentDetailPage({ params }: PageProps) {
 
   return <ContentDetailView content={content} />;
 }
+

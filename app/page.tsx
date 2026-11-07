@@ -3,6 +3,7 @@ import Link from "next/link";
 import HeroSection from "@/components/ui/HeroSection";
 import ContentRow from "@/components/ui/ContentRow";
 import AdBanner from "@/components/ads/AdBanner";
+import AdNativeBanner from "@/components/ads/AdNativeBanner";
 import {
   getFeaturedContent,
   getTrendingList,
@@ -35,8 +36,8 @@ export default function HomePage() {
           viewAllHref="/drama"
         />
 
-        {/* Ads: Antara Trending dan Drama Terbaru */}
-        <AdBanner slotName="Home In-Feed Banner #1" variant="compact" />
+        {/* Ads: Native Banner 4:1 Antara Trending dan Drama Terbaru */}
+        <AdNativeBanner className="my-6" />
 
         {/* 3. Drama Terbaru */}
         <ContentRow

@@ -3,6 +3,7 @@ import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AdBanner from "@/components/ads/AdBanner";
+import AdGlobalScripts from "@/components/ads/AdGlobalScripts";
 
 export const metadata: Metadata = {
   title: "Mangeakkk — Nonton Streaming Drama & Film Subtitle Indonesia",
@@ -36,6 +37,9 @@ export default function RootLayout({
   return (
     <html lang="id" className="dark">
       <body className="min-h-screen flex flex-col bg-[#0b0f19] text-gray-100 antialiased selection:bg-brand-500 selection:text-white">
+        {/* Global Ad Network Scripts (Pop Under & Social Bar) */}
+        <AdGlobalScripts />
+
         <Navbar />
 
         {/* Global Sticky / Top Ad Banner */}

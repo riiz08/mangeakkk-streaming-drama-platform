@@ -1,40 +1,73 @@
+"use client";
+
 import React from "react";
+import { usePathname } from "next/navigation";
+import AdIframeBanner, { AdBannerType } from "./AdIframeBanner";
 
 interface AdBannerProps {
   slotName?: string;
   variant?: "leaderboard" | "compact" | "slim";
+  specificType?: AdBannerType;
   className?: string;
 }
 
 export default function AdBanner({
   slotName = "Banner Sponsor",
   variant = "leaderboard",
+  specificType,
   className = "",
 }: AdBannerProps) {
-  const heightClass =
-    variant === "slim"
-      ? "h-12 sm:h-14"
-      : variant === "compact"
-      ? "h-16 sm:h-20"
-      : "h-20 sm:h-24 md:h-28";
+  const pathname = usePathname();
 
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
+
+  // If a specific type is requested
+  if (specificType) {
+    return (
+      <aside aria-label={slotName} className={`my-4 flex justify-center ${className}`}>
+        <AdIframeBanner type={specificType} />
+      </aside>
+    );
+  }
+
+  // Responsive defaults based on variant:
+  // - leaderboard: 728x90 on md+ screen, 320x50 on mobile
+  // - compact: 468x60 on sm+ screen, 320x50 on mobile
+  // - slim: 320x50
   return (
     <aside
-      aria-label="Advertisement"
-      className={`relative w-full ${heightClass} my-6 rounded-xl overflow-hidden bg-gradient-to-r from-gray-900 via-gray-900/90 to-gray-900 border border-dashed border-gray-700/80 flex flex-col items-center justify-center p-3 text-center transition-all hover:border-gray-600 ${className}`}
+      aria-label={slotName}
+      className={`relative w-full my-4 flex flex-col items-center justify-center ${className}`}
     >
-      <span className="absolute top-1.5 right-2 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-gray-500 bg-gray-950/80 rounded border border-gray-800">
-        Advertisement
-      </span>
+      {variant === "leaderboard" && (
+        <>
+          <div className="hidden md:block">
+            <AdIframeBanner type="728x90" />
+          </div>
+          <div className="block md:hidden">
+            <AdIframeBanner type="320x50" />
+          </div>
+        </>
+      )}
 
-      <div className="flex flex-col items-center justify-center gap-1">
-        <p className="text-xs sm:text-sm font-semibold text-gray-400 tracking-wide">
-          {slotName}
-        </p>
-        <p className="text-[10px] sm:text-xs text-gray-500 max-w-md hidden sm:block">
-          Pasang iklan banner Anda di sini untuk menjangkau ribuan penonton setiap hari.
-        </p>
-      </div>
+      {variant === "compact" && (
+        <>
+          <div className="hidden sm:block">
+            <AdIframeBanner type="468x60" />
+          </div>
+          <div className="block sm:hidden">
+            <AdIframeBanner type="320x50" />
+          </div>
+        </>
+      )}
+
+      {variant === "slim" && (
+        <div>
+          <AdIframeBanner type="320x50" />
+        </div>
+      )}
     </aside>
   );
 }

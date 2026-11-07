@@ -65,3 +65,4 @@ export default async function DramaEpisodeWatchPage({ params }: PageProps) {
 
   return <WatchView content={content} currentEpisodeSlug={episode} />;
 }
+
