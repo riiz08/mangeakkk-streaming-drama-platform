@@ -84,8 +84,8 @@ export default function WatchView({ content, currentEpisodeSlug }: WatchViewProp
         </div>
       </div>
 
-      {/* Ads: 1x AdBanner di atas video player */}
-      <AdBanner slotName="Player Top Leaderboard" variant="compact" className="my-3" />
+      {/* Ads: 1x AdBanner (728x90 Desktop / 320x50 Mobile) di atas video player */}
+      <AdBanner priority={true} slotName="Player Top Leaderboard" variant="leaderboard" className="my-2" />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-2">
         {/* Left Column: Player & Info (2 cols on large screen) */}
@@ -164,13 +164,10 @@ export default function WatchView({ content, currentEpisodeSlug }: WatchViewProp
             </div>
           </div>
 
-          {/* Ads: 1x AdSlot di sidebar */}
-          <AdSlot slotName="Player Sidebar Sponsor" />
+          {/* Ads: 1x AdSlot 300x250 di sidebar */}
+          <AdSlot type="300x250" slotName="Player Sidebar Sponsor" />
         </div>
       </div>
-
-      {/* Ads: 1x AdBanner di bawah daftar episode, sebelum Footer */}
-      <AdBanner slotName="Watch Page Pre-Footer Banner" className="mt-10" />
     </div>
   );
 }

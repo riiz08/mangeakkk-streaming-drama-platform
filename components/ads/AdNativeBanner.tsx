@@ -1,14 +1,42 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 interface AdNativeBannerProps {
+  priority?: boolean;
   className?: string;
 }
 
-export default function AdNativeBanner({ className = "" }: AdNativeBannerProps) {
+export default function AdNativeBanner({
+  priority = false,
+  className = "",
+}: AdNativeBannerProps) {
   const pathname = usePathname();
+  const [shouldLoad, setShouldLoad] = useState(priority);
+  const containerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (priority || shouldLoad) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setShouldLoad(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { rootMargin: "250px" }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [priority, shouldLoad]);
 
   if (pathname?.startsWith("/admin")) {
     return null;
@@ -45,23 +73,27 @@ export default function AdNativeBanner({ className = "" }: AdNativeBannerProps) 
 
   return (
     <aside
+      ref={containerRef}
       aria-label="Native Advertisement"
-      className={`relative w-full max-w-4xl mx-auto my-6 p-2 rounded-xl bg-gray-900/40 border border-gray-800/80 flex flex-col items-center justify-center ${className}`}
+      className={`relative w-full max-w-4xl mx-auto my-6 p-2 rounded-xl bg-gray-900/40 border border-gray-800/80 flex flex-col items-center justify-center min-h-[140px] ${className}`}
     >
       <span className="text-[9px] uppercase font-bold tracking-widest text-gray-500 mb-1.5 self-center select-none">
         Sponsored Content (Native 4:1)
       </span>
-      <iframe
-        title="ad-native-4-1"
-        srcDoc={srcDoc}
-        width="100%"
-        height="120"
-        scrolling="no"
-        frameBorder="0"
-        className="w-full rounded-lg max-w-3xl"
-        style={{ border: 0, overflow: "hidden", minHeight: "100px" }}
-      />
+      {shouldLoad ? (
+        <iframe
+          title="ad-native-4-1"
+          srcDoc={srcDoc}
+          width="100%"
+          height="120"
+          scrolling="no"
+          frameBorder="0"
+          className="w-full rounded-lg max-w-3xl"
+          style={{ border: 0, overflow: "hidden", minHeight: "100px" }}
+        />
+      ) : (
+        <div className="w-full h-[100px] max-w-3xl rounded-lg bg-gray-900/30 animate-pulse" />
+      )}
     </aside>
   );
 }
-

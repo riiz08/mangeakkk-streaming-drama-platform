@@ -5,6 +5,7 @@ import ContentCard from "@/components/ui/ContentCard";
 import FilterBar from "@/components/ui/FilterBar";
 import AdBanner from "@/components/ads/AdBanner";
 import AdSlot from "@/components/ads/AdSlot";
+import AdNativeBanner from "@/components/ads/AdNativeBanner";
 import { Content } from "@/lib/data/mock";
 import { Film, Tv } from "lucide-react";
 
@@ -67,8 +68,14 @@ export default function CatalogView({
         onSortChange={setSelectedSort}
       />
 
-      {/* Ads: 1x AdBanner di atas grid konten */}
-      <AdBanner slotName={`Katalog ${title} - Top Leaderboard`} />
+      {/* Top Stacked Banners (3 di Desktop, 2 di Mobile) */}
+      <div className="space-y-2 mb-6">
+        <AdBanner priority={true} slotName={`Katalog ${title} - Top Banner 1`} className="!my-1" />
+        <AdBanner priority={true} slotName={`Katalog ${title} - Top Banner 2`} className="!my-1" />
+        <div className="hidden md:block">
+          <AdBanner priority={true} specificType="728x90" slotName={`Katalog ${title} - Top Banner 3 Desktop`} className="!my-1" />
+        </div>
+      </div>
 
       {/* Results Count */}
       <div className="flex items-center justify-between text-xs sm:text-sm text-gray-400 mb-6">
@@ -85,20 +92,42 @@ export default function CatalogView({
         )}
       </div>
 
-      {/* Grid Content with inline AdSlot every 8 items */}
+      {/* Grid Content with inline Native & 300x250 AdSlot */}
       {filteredItems.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-          {filteredItems.map((item, index) => (
-            <React.Fragment key={item.id}>
-              <ContentCard content={item} />
-              {(index + 1) % 8 === 0 && (
-                <div className="col-span-1">
-                  <AdSlot slotName={`Sponsor Grid #${(index + 1) / 8}`} />
-                </div>
-              )}
-            </React.Fragment>
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+            {filteredItems.slice(0, 5).map((item) => (
+              <ContentCard key={item.id} content={item} />
+            ))}
+          </div>
+
+          {/* In-Grid Native Banner 4:1 #1 */}
+          <AdNativeBanner className="my-6" />
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+            {filteredItems.slice(5, 10).map((item) => (
+              <ContentCard key={item.id} content={item} />
+            ))}
+          </div>
+
+          {/* In-Grid 300x250 AdSlot #1 (Desktop Only) */}
+          <div className="hidden md:flex justify-center my-6">
+            <AdSlot type="300x250" slotName={`Katalog ${title} Inline 300x250`} />
+          </div>
+
+          {filteredItems.length > 10 && (
+            <>
+              {/* In-Grid Native Banner 4:1 #2 */}
+              <AdNativeBanner className="my-6" />
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+                {filteredItems.slice(10).map((item) => (
+                  <ContentCard key={item.id} content={item} />
+                ))}
+              </div>
+            </>
+          )}
+        </>
       ) : (
         <div className="py-20 text-center bg-gray-900/30 rounded-2xl border border-gray-800">
           <p className="text-gray-400 text-base">Tidak ada judul yang sesuai dengan filter.</p>
@@ -111,8 +140,8 @@ export default function CatalogView({
         </div>
       )}
 
-      {/* Ads: 1x AdBanner di bawah grid, sebelum Footer */}
-      <AdBanner slotName={`Katalog ${title} - Bottom Banner`} />
+      {/* Mid Banner 468x60 (Desktop) / 320x50 (Mobile) */}
+      <AdBanner slotName={`Katalog ${title} - In-Feed Mid Banner`} variant="compact" className="my-6" />
     </div>
   );
 }

@@ -28,8 +28,16 @@ export default function ContentDetailView({ content }: ContentDetailViewProps) {
 
   return (
     <div className="pb-16">
+      {/* Top Stacked Banners (2 di Desktop, 1 di Mobile) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-1 space-y-2">
+        <AdBanner priority={true} slotName="Detail Top Banner 1" className="!my-1" />
+        <div className="hidden md:block">
+          <AdBanner priority={true} specificType="728x90" slotName="Detail Top Banner 2 Desktop" className="!my-1" />
+        </div>
+      </div>
+
       {/* 1. Backdrop Banner */}
-      <div className="relative w-full h-[360px] sm:h-[460px] lg:h-[520px] -mt-16 overflow-hidden">
+      <div className="relative w-full h-[360px] sm:h-[460px] lg:h-[520px] overflow-hidden">
         <Image
           src={content.backdrop}
           alt={content.title}
@@ -165,8 +173,8 @@ export default function ContentDetailView({ content }: ContentDetailViewProps) {
           </div>
         </div>
 
-        {/* Ads: 1x AdBanner di bawah info sinopsis */}
-        <AdBanner slotName="Detail Info Sponsor" className="mt-8 mb-4" />
+        {/* Ads: 1x AdBanner (468x60 Desktop / 320x50 Mobile) di bawah info sinopsis */}
+        <AdBanner variant="compact" slotName="Detail Info Sponsor" className="mt-8 mb-4" />
 
         {/* 3. Khusus FILM: Embed Video Player Langsung di Halaman Ini */}
         {content.type === "film" && (

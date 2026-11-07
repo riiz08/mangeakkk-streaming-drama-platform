@@ -1,219 +1,148 @@
-# Skeleton Loading, Redesign Hero Banner, Admin Dashboard & Integrasi Ads
+# Perbaiki Penempatan Iklan Sesuai Referensi & Optimasi Loading
+
+## Referensi Screenshot
+
+Berikut screenshot referensi penempatan iklan yang harus diikuti:
+
+![Desktop](ref_desktop.jpg)
+![Mobile](ref_mobile.png)
+
+---
 
 ## Ringkasan
 
-Iterasi ini mencakup 4 perbaikan utama:
-1. Tambahkan skeleton/shimmer loading untuk semua elemen UI
-2. Redesign hero banner agar lebih clean dan profesional
-3. Buat admin dashboard untuk input konten drama/film dan monitoring traffic
-4. Integrasikan ad network yang sesungguhnya (ganti placeholder ads)
+Perbaiki penempatan iklan agar sesuai persis dengan referensi screenshot. **Pertahankan layout halaman saat ini** (full-width tanpa sidebar tambahan). Hanya ubah posisi, jumlah, dan jenis iklan. Tambahkan 1 floating ad. Halaman lain mengikuti pola halaman utama yang disesuaikan.
 
 ---
 
-## 1. Skeleton Loading untuk Semua Elemen
+## Hasil Analisis Screenshot — Hitungan Iklan
 
-Tambahkan skeleton/shimmer loading state di semua komponen dan halaman. Gunakan komponen `Skeleton.tsx` yang sudah ada sebagai base.
+### Desktop (Halaman Utama) — Total: 12 unit iklan
 
-**Komponen yang perlu skeleton:**
-- `ContentCard` — placeholder kartu dengan shimmer untuk poster, judul, badge
-- `HeroSection` — skeleton full-width untuk banner utama
-- `ContentRow` — skeleton horizontal scroll row (4-6 kartu placeholder)
-- `EpisodeList` — skeleton list item untuk daftar episode
-- `ContentDetailView` — skeleton untuk halaman detail (poster, info, sinopsis)
-- `WatchView` — skeleton untuk area video player dan info episode
-- `CatalogView` — skeleton grid untuk halaman katalog drama/film
-- `SearchView` — skeleton untuk hasil pencarian
-- `Navbar` — loading state ringan jika perlu
-- `FilterBar` — skeleton untuk filter options
+Dari atas ke bawah pada screenshot desktop:
 
-**Panduan:**
-- Gunakan animasi pulse/shimmer dengan warna `bg-zinc-800` dan `bg-zinc-700`
-- Setiap komponen yang fetch data harus menampilkan skeleton selama loading
-- Skeleton harus match layout asli komponen agar tidak ada layout shift
+| No | Posisi | Jenis Iklan | Keterangan |
+|----|--------|-------------|------------|
+| 1 | Paling atas (row 1) | Banner 728x90 | Baris banner pertama di atas semua konten |
+| 2 | Paling atas (row 2) | Banner 728x90 | Baris banner kedua, di bawah row 1 |
+| 3 | Paling atas (row 3) | Banner 728x90 | Baris banner ketiga, di bawah row 2 |
+| 4 | Paling atas (row 4) | Banner 728x90 | Baris banner keempat, di bawah row 3 (area "MODAL RECEH" dst) |
+| 5 | Di antara grid konten baris 1 dan baris 2 | Native Banner 4:1 | Native ad disisipkan di antara row konten pertama dan kedua |
+| 6 | Di antara grid konten baris 2 dan baris 3 | Native Banner 4:1 | Native ad disisipkan di antara row konten kedua dan ketiga |
+| 7 | Di antara section konten dan section bawah | Banner 468x60 | Banner horizontal antara section konten utama dan section "Anime Terbaru" |
+| 8 | Area sidebar / inline (posisi 1) | Banner 300x250 | Karena layout kita full-width, taruh inline setelah section konten pertama (kanan di ref = setelah section di layout kita) |
+| 9 | Area sidebar / inline (posisi 2) | Banner 300x250 | Inline setelah section konten kedua |
+| 10 | Sebelum footer | Banner 728x90 | Satu banner leaderboard terakhir sebelum footer |
+| 11 | **Floating (sticky bottom)** | Banner 468x60 | Floating banner di bawah layar, tetap terlihat saat scroll. Berisi banner gambar seperti pada referensi. Position: fixed di bottom. |
+| 12 | Global (background) | Pop Under | Pop under script, dimuat sekali |
 
----
+**+ Social Bar dimuat global sebagai overlay (tidak dihitung sebagai unit penempatan visual)**
 
-## 2. Redesign Hero Banner
+### Mobile (Halaman Utama) — Total: 9 unit iklan
 
-Ubah desain `HeroSection` agar terlihat lebih clean, modern, dan profesional.
+Dari atas ke bawah pada screenshot mobile:
 
-**Arahan desain:**
-- Gunakan gradient overlay yang lebih halus (dari bawah ke atas, gelap ke transparan)
-- Tampilkan judul drama dengan typography besar dan bold
-- Tambahkan sinopsis singkat (max 2-3 baris, truncate sisanya)
-- Badge "Drama Unggulan" tampil prominent
-- Tombol "Tonton Sekarang" dan "Lihat Detail" dengan desain yang jelas
-- Gambar poster/backdrop full-width dengan aspect ratio 16:9 atau 21:9
-- Pastikan teks tetap terbaca di atas gambar apapun (gunakan overlay gelap)
-- Responsif: di mobile tampilkan layout yang lebih compact
-- Inspirasi: hero section Netflix/Disney+ (gambar besar, gradient, info overlay di kiri bawah)
-
----
-
-## 3. Admin Dashboard
-
-Buat halaman admin di route `/admin` dengan dua fitur utama:
-
-### 3a. Input Konten Drama/Film
-- Form untuk menambah drama/film baru dengan field:
-  - Judul, slug, tipe (tv-series/film), poster URL, backdrop URL
-  - Sinopsis, tahun, badge (NEW/HOT/Pilihan/Drama Unggulan)
-  - Untuk drama: input daftar episode (judul episode, nomor, video URL)
-- Tabel daftar konten yang sudah ada dengan aksi edit/hapus
-- Simpan data ke state/local storage (mock, belum perlu backend)
-
-### 3b. Monitoring Traffic
-- Dashboard tampilkan statistik traffic harian dan mingguan
-- Gunakan chart/grafik sederhana (bisa pakai library seperti recharts atau chart.js)
-- Tampilkan: total views hari ini, views 7 hari terakhir (line chart), halaman terpopuler
-- Data mock untuk saat ini, struktur siap untuk integrasi analytics nanti
-
-### 3c. Proteksi Admin
-- Tambahkan proteksi sederhana (password check atau basic auth mock)
-- Halaman login admin sederhana sebelum bisa akses dashboard
+| No | Posisi | Jenis Iklan | Keterangan |
+|----|--------|-------------|------------|
+| 1 | Paling atas (row 1) | Banner 320x50 | Banner mobile pertama di atas konten |
+| 2 | Paling atas (row 2) | Banner 320x50 | Banner mobile kedua |
+| 3 | Paling atas (row 3) | Banner 320x50 | Banner mobile ketiga |
+| 4 | Di antara grid konten baris 1 dan baris 2 | Banner 320x50 | Di antara row konten |
+| 5 | Di antara grid konten baris 2 dan baris 3 | Banner 320x50 | Di antara row konten |
+| 6 | Di antara section bawah | Banner 320x50 | Di antara section konten bawah |
+| 7 | Sebelum footer | Banner 320x50 | Banner terakhir sebelum footer |
+| 8 | **Floating (sticky bottom)** | Banner 320x50 | Floating banner sticky di bawah layar |
+| 9 | Global (background) | Pop Under | Pop under script, dimuat sekali |
 
 ---
 
-## 4. Integrasi Ad Network
+## Implementasi per Halaman
 
-Ganti semua komponen placeholder ads (`AdBanner.tsx`, `AdSlot.tsx`) dengan script iklan sesungguhnya. Buat komponen wrapper untuk setiap tipe iklan.
+### Halaman Utama (`/`)
 
-### Daftar Script Iklan
+Ikuti tabel di atas persis. Penempatan:
+1. 4 banner 728x90 bertumpuk sebelum hero section (desktop) / 3 banner 320x50 bertumpuk (mobile)
+2. Native 4:1 di antara `ContentRow` pertama dan kedua
+3. Native 4:1 di antara `ContentRow` kedua dan ketiga
+4. Banner 468x60 di antara section "Tipe Tayangan" dan content row (desktop) / 320x50 (mobile)
+5. 2x Banner 300x250 disisipkan inline setelah beberapa section konten (desktop only, di mobile sembunyikan)
+6. 1x Banner 728x90 sebelum footer (desktop) / 320x50 (mobile)
+7. 1x Floating banner sticky bottom — selalu tampil, bisa ditutup user (tombol X kecil)
 
-**Pop Under** (load sekali, global di layout):
-```html
-<script src="https://pl32245018.profitableratecpmnetwork.com/5e/d9/65/5ed965a8eca7e10ddb8a7695b1a403d6.js"></script>
-```
+### Halaman Katalog (`/drama`, `/film`)
 
-**Native Banner 4:1** (di antara row konten):
-```html
-<script async="async" data-cfasync="false" src="https://pl32245019.profitableratecpmnetwork.com/4e7f9cf9b069462c8d8926d8cfb6605e/invoke.js"></script>
-<div id="container-4e7f9cf9b069462c8d8926d8cfb6605e"></div>
-```
+Mengikuti pola halaman utama:
+- 3 banner 728x90 bertumpuk di atas (desktop) / 2 banner 320x50 (mobile)
+- 2x Native 4:1 atau 468x60 di antara grid konten
+- 1x 300x250 inline di grid (desktop)
+- 1x 728x90 sebelum footer (desktop) / 320x50 (mobile)
+- Floating banner tetap tampil
 
-**Social Bar** (global overlay di layout):
-```html
-<script src="https://pl32245020.profitableratecpmnetwork.com/df/93/2e/df932e42b9f0b6120f52b2d8801f428a.js"></script>
-```
+### Halaman Detail (`/[slug]`)
 
-**Banner 468x60** (desktop, di antara konten):
-```html
-<script>
-  atOptions = {
-    'key' : '570956abb47838f8c2ac5aca6af959ef',
-    'format' : 'iframe',
-    'height' : 60,
-    'width' : 468,
-    'params' : {}
-  };
-</script>
-<script src="https://www.highrevenueformat.com/570956abb47838f8c2ac5aca6af959ef/invoke.js"></script>
-```
+- 2 banner 728x90 di atas (desktop) / 1 banner 320x50 (mobile)
+- 1x 468x60 di antara info sinopsis dan daftar episode
+- 1x 300x250 inline di bawah episode list (desktop)
+- 1x 728x90 sebelum footer (desktop) / 320x50 (mobile)
+- Floating banner tetap tampil
 
-**Banner 300x250** (sidebar / inline di grid konten):
-```html
-<script>
-  atOptions = {
-    'key' : 'eed91600433761384f36f499540649ff',
-    'format' : 'iframe',
-    'height' : 250,
-    'width' : 300,
-    'params' : {}
-  };
-</script>
-<script src="https://bancadeltempoidea.org/22/eed91600433761384f36f499540649ff"></script>
-```
+### Halaman Watch/Nonton (`/[slug]/[episode]`)
 
-**Banner 160x300** (sidebar):
-```html
-<script>
-  atOptions = {
-    'key' : '5365f43eb28d2e588cf4078bfedfe94b',
-    'format' : 'iframe',
-    'height' : 300,
-    'width' : 160,
-    'params' : {}
-  };
-</script>
-<script src="https://bancadeltempoidea.org/22/5365f43eb28d2e588cf4078bfedfe94b"></script>
-```
+- 1 banner 728x90 di atas player (desktop) / 1 banner 320x50 (mobile)
+- 1x 468x60 di bawah video player
+- 1x 300x250 inline setelah info episode (desktop)
+- 1x 728x90 sebelum footer (desktop) / 320x50 (mobile)
+- Floating banner tetap tampil
 
-**Banner 160x600** (sidebar tall):
-```html
-<script>
-  atOptions = {
-    'key' : '6292755035e166c1f0ad7a844c5d9eea',
-    'format' : 'iframe',
-    'height' : 600,
-    'width' : 160,
-    'params' : {}
-  };
-</script>
-<script src="https://bancadeltempoidea.org/22/6292755035e166c1f0ad7a844c5d9eea"></script>
-```
+### Halaman Search (`/search`)
 
-**Banner 320x50** (mobile, bottom/inline):
-```html
-<script>
-  atOptions = {
-    'key' : 'b4fafb58436579971aecf4bfd65c105c',
-    'format' : 'iframe',
-    'height' : 50,
-    'width' : 320,
-    'params' : {}
-  };
-</script>
-<script src="https://www.highrevenueformat.com/b4fafb58436579971aecf4bfd65c105c/invoke.js"></script>
-```
+- 2 banner 728x90 di atas (desktop) / 1 banner 320x50 (mobile)
+- 1x 468x60 di antara hasil pencarian
+- 1x 728x90 sebelum footer (desktop) / 320x50 (mobile)
+- Floating banner tetap tampil
 
-**Banner 728x90** (desktop leaderboard, atas/bawah konten):
-```html
-<script>
-  atOptions = {
-    'key' : 'cabaf73ee59c135e3a9bcab5edf35b47',
-    'format' : 'iframe',
-    'height' : 90,
-    'width' : 728,
-    'params' : {}
-  };
-</script>
-<script src="https://www.highrevenueformat.com/cabaf73ee59c135e3a9bcab5edf35b47/invoke.js"></script>
-```
+### Halaman Admin (`/admin`)
 
-### Strategi Penempatan Ads
-
-| Tipe Iklan | Penempatan |
-|---|---|
-| Pop Under | `layout.tsx` — load sekali secara global |
-| Social Bar | `layout.tsx` — overlay global |
-| Native Banner 4:1 | Di antara `ContentRow` di halaman Home |
-| Banner 728x90 | Header/footer area di halaman Home, Catalog, Detail |
-| Banner 468x60 | Di antara konten di halaman Detail dan Watch (desktop) |
-| Banner 300x250 | Sidebar halaman Detail dan Watch, inline di Catalog grid |
-| Banner 160x300 | Sidebar halaman Detail (desktop) |
-| Banner 160x600 | Sidebar halaman Home dan Catalog (desktop) |
-| Banner 320x50 | Sticky bottom atau inline di semua halaman (mobile) |
-
-### Panduan Implementasi Ads
-- Buat komponen Next.js wrapper menggunakan `next/script` atau `useEffect` + `dangerouslySetInnerHTML` untuk inject script
-- Script global (pop under, social bar) cukup dimuat sekali di root layout
-- Banner dengan `atOptions` perlu komponen client-side yang inject script saat mount
-- Pastikan responsive: tampilkan banner sesuai ukuran viewport (320x50 untuk mobile, 728x90 untuk desktop, dll)
-- Jangan tampilkan ads di halaman `/admin`
+- **Tidak ada iklan sama sekali** — termasuk floating banner tidak tampil di admin
 
 ---
 
-## Prioritas Pengerjaan
+## Floating Banner (BARU)
 
-1. **Skeleton Loading** — kerjakan pertama karena improve UX dasar
-2. **Redesign Hero Banner** — visual improvement utama
-3. **Integrasi Ads** — monetisasi
-4. **Admin Dashboard** — fitur management konten
+Buat komponen **baru** `FloatingAdBanner`:
+- Position: `fixed`, bottom: `0`, full width, z-index tinggi
+- Tampilkan banner 468x60 (desktop) / 320x50 (mobile) di tengah
+- Ada tombol **X (close)** kecil di pojok kanan atas banner untuk menutup
+- Setelah ditutup, tidak muncul lagi selama sesi tersebut (simpan state di `sessionStorage`)
+- Tidak tampil di halaman `/admin`
+- Background semi-transparan gelap di belakang banner
 
 ---
 
-## Catatan
-- Pastikan build (`bun run build`) berhasil tanpa error setelah semua perubahan
-- Tidak perlu backend/database untuk saat ini, gunakan mock data dan local storage
-- Semua halaman publik harus memiliki minimal 1 ad placement
-- Admin dashboard tidak perlu ad placement
+## Optimasi Loading Iklan
+
+Agar iklan cepat di-load dan tidak menghambat rendering halaman:
+
+1. **Preconnect ke domain ad network**: Tambahkan di `<head>` layout:
+   - `<link rel="preconnect" href="https://pl32245018.profitableratecpmnetwork.com">`
+   - `<link rel="preconnect" href="https://pl32245019.profitableratecpmnetwork.com">`
+   - `<link rel="preconnect" href="https://pl32245020.profitableratecpmnetwork.com">`
+   - `<link rel="preconnect" href="https://www.highrevenueformat.com">`
+   - `<link rel="preconnect" href="https://bancadeltempoidea.org">`
+
+2. **Lazy load iklan bawah**: Iklan yang ada di bawah fold (tidak terlihat saat pertama load) dimuat hanya saat mendekati viewport menggunakan **Intersection Observer**
+
+3. **Prioritaskan iklan atas**: 4 banner teratas (above the fold) dimuat langsung tanpa lazy load
+
+4. **Set dimensi tetap pada container iklan**: Setiap container iklan harus punya `width` dan `height` atau `min-height` yang tetap agar tidak terjadi layout shift (CLS) saat iklan dimuat
+
+5. **Script global (Pop Under & Social Bar)**: Tetap gunakan `strategy="afterInteractive"` di Next.js agar tidak memblokir initial render
+
+---
+
+## Catatan Penting
+- **Pertahankan layout halaman saat ini** — jangan ubah struktur layout menjadi 2 kolom atau tambah sidebar
+- Jangan ubah script/key iklan yang sudah ada, hanya ubah penempatan dan jumlahnya
+- Pastikan responsive: desktop tampilkan 728x90/468x60/300x250, mobile tampilkan 320x50
+- Pastikan `bun run build` berhasil tanpa error setelah perubahan
+

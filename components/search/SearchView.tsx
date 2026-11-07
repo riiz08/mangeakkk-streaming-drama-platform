@@ -49,8 +49,13 @@ export default function SearchView() {
         </form>
       </div>
 
-      {/* Ads: 1x AdBanner di atas hasil pencarian */}
-      <AdBanner slotName="Search Top Leaderboard" variant="compact" className="mb-6" />
+      {/* Top Stacked Banners (2 di Desktop, 1 di Mobile) */}
+      <div className="space-y-2 mb-6">
+        <AdBanner priority={true} slotName="Search Top Banner 1" className="!my-1" />
+        <div className="hidden md:block">
+          <AdBanner priority={true} specificType="728x90" slotName="Search Top Banner 2 Desktop" className="!my-1" />
+        </div>
+      </div>
 
       {/* Results Section */}
       <div>
@@ -66,11 +71,26 @@ export default function SearchView() {
         </div>
 
         {results.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-            {results.map((item) => (
-              <ContentCard key={item.id} content={item} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+              {results.slice(0, 5).map((item) => (
+                <ContentCard key={item.id} content={item} />
+              ))}
+            </div>
+
+            {results.length > 5 && (
+              <>
+                {/* Mid In-Feed Banner 468x60 (Desktop) / 320x50 (Mobile) */}
+                <AdBanner variant="compact" slotName="Search Mid In-Feed Banner" className="my-6" />
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+                  {results.slice(5).map((item) => (
+                    <ContentCard key={item.id} content={item} />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
         ) : query ? (
           <div className="py-20 text-center bg-gray-900/30 rounded-2xl border border-gray-800 max-w-lg mx-auto p-6">
             <AlertCircle className="w-10 h-10 text-gray-500 mx-auto mb-3" />
@@ -81,9 +101,6 @@ export default function SearchView() {
           </div>
         ) : null}
       </div>
-
-      {/* Ads: 1x AdBanner di bawah hasil pencarian */}
-      <AdBanner slotName="Search Bottom Leaderboard" className="mt-10" />
     </div>
   );
 }

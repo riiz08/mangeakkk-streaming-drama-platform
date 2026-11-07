@@ -4,6 +4,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AdBanner from "@/components/ads/AdBanner";
 import AdGlobalScripts from "@/components/ads/AdGlobalScripts";
+import FloatingAdBanner from "@/components/ads/FloatingAdBanner";
 
 export const metadata: Metadata = {
   title: "Mangeakkk — Nonton Streaming Drama & Film Subtitle Indonesia",
@@ -36,23 +37,34 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id" className="dark">
-      <body className="min-h-screen flex flex-col bg-[#0b0f19] text-gray-100 antialiased selection:bg-brand-500 selection:text-white">
+      <head>
+        {/* Ad Network DNS & Connection Optimization */}
+        <link rel="preconnect" href="https://pl32245018.profitableratecpmnetwork.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://pl32245019.profitableratecpmnetwork.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://pl32245020.profitableratecpmnetwork.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://www.highrevenueformat.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://bancadeltempoidea.org" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://pl32245018.profitableratecpmnetwork.com" />
+        <link rel="dns-prefetch" href="https://pl32245019.profitableratecpmnetwork.com" />
+        <link rel="dns-prefetch" href="https://pl32245020.profitableratecpmnetwork.com" />
+        <link rel="dns-prefetch" href="https://www.highrevenueformat.com" />
+        <link rel="dns-prefetch" href="https://bancadeltempoidea.org" />
+      </head>
+      <body className="min-h-screen flex flex-col bg-[#0b0f19] text-gray-100 antialiased selection:bg-brand-500 selection:text-white pb-16 sm:pb-20">
         {/* Global Ad Network Scripts (Pop Under & Social Bar) */}
         <AdGlobalScripts />
 
         <Navbar />
 
-        {/* Global Sticky / Top Ad Banner */}
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
-          <AdBanner slotName="Header Sticky Sponsor" variant="slim" className="my-2" />
-        </div>
-
         <main className="flex-1 w-full">{children}</main>
 
-        {/* Global Footer Ad Banner */}
+        {/* Global Pre-Footer Ad Banner (728x90 on Desktop, 320x50 on Mobile) */}
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
           <AdBanner slotName="Pre-Footer Global Sponsor" />
         </div>
+
+        {/* Sticky Floating Bottom Ad Banner (468x60 Desktop / 320x50 Mobile with Close Button) */}
+        <FloatingAdBanner />
 
         <Footer />
       </body>

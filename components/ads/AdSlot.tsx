@@ -7,12 +7,14 @@ import AdIframeBanner, { AdBannerType } from "./AdIframeBanner";
 interface AdSlotProps {
   slotName?: string;
   type?: "300x250" | "160x300" | "160x600";
+  priority?: boolean;
   className?: string;
 }
 
 export default function AdSlot({
   slotName = "Iklan Sponsor",
   type = "300x250",
+  priority = false,
   className = "",
 }: AdSlotProps) {
   const pathname = usePathname();
@@ -26,7 +28,7 @@ export default function AdSlot({
       aria-label={slotName}
       className={`relative my-4 flex items-center justify-center ${className}`}
     >
-      <AdIframeBanner type={type as AdBannerType} />
+      <AdIframeBanner type={type as AdBannerType} priority={priority} />
     </aside>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 export type AdBannerType =
@@ -59,11 +59,41 @@ const AD_CONFIGS: Record<AdBannerType, AdConfig> = {
 
 interface AdIframeBannerProps {
   type: AdBannerType;
+  priority?: boolean;
   className?: string;
 }
 
-export default function AdIframeBanner({ type, className = "" }: AdIframeBannerProps) {
+export default function AdIframeBanner({
+  type,
+  priority = false,
+  className = "",
+}: AdIframeBannerProps) {
   const pathname = usePathname();
+  const [shouldLoad, setShouldLoad] = useState(priority);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Lazy loading optimization using Intersection Observer
+  useEffect(() => {
+    if (priority || shouldLoad) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setShouldLoad(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { rootMargin: "250px" } // Pre-load 250px before entering viewport
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [priority, shouldLoad]);
 
   if (pathname?.startsWith("/admin")) {
     return null;
@@ -108,32 +138,44 @@ export default function AdIframeBanner({ type, className = "" }: AdIframeBannerP
 
   return (
     <div
+      ref={containerRef}
       className={`relative flex flex-col items-center justify-center mx-auto overflow-hidden ${className}`}
       style={{
         maxWidth: "100%",
         width: `${config.width}px`,
-        minHeight: `${config.height}px`,
+        minHeight: `${config.height + 18}px`, // Fixed dimensions prevents CLS
       }}
     >
       <span className="text-[9px] uppercase font-bold tracking-widest text-gray-500 mb-1 select-none">
         Advertisement
       </span>
-      <iframe
-        title={`ad-${type}`}
-        srcDoc={srcDoc}
-        width={config.width}
-        height={config.height}
-        scrolling="no"
-        frameBorder="0"
-        className="rounded-lg shadow-sm border border-gray-800/60 max-w-full"
-        style={{
-          border: 0,
-          overflow: "hidden",
-          width: `${config.width}px`,
-          height: `${config.height}px`,
-        }}
-      />
+
+      {shouldLoad ? (
+        <iframe
+          title={`ad-${type}`}
+          srcDoc={srcDoc}
+          width={config.width}
+          height={config.height}
+          scrolling="no"
+          frameBorder="0"
+          className="rounded-lg shadow-sm border border-gray-800/60 max-w-full"
+          style={{
+            border: 0,
+            overflow: "hidden",
+            width: `${config.width}px`,
+            height: `${config.height}px`,
+          }}
+        />
+      ) : (
+        <div
+          className="rounded-lg bg-gray-900/40 border border-gray-800/40 animate-pulse"
+          style={{
+            width: `${config.width}px`,
+            maxWidth: "100%",
+            height: `${config.height}px`,
+          }}
+        />
+      )}
     </div>
   );
 }
-

@@ -3,6 +3,7 @@ import Link from "next/link";
 import HeroSection from "@/components/ui/HeroSection";
 import ContentRow from "@/components/ui/ContentRow";
 import AdBanner from "@/components/ads/AdBanner";
+import AdSlot from "@/components/ads/AdSlot";
 import AdNativeBanner from "@/components/ads/AdNativeBanner";
 import {
   getFeaturedContent,
@@ -19,16 +20,27 @@ export default function HomePage() {
   const films = getFilmList();
 
   return (
-    <div className="space-y-6">
-      {/* 1. Hero Section */}
+    <div className="space-y-4 sm:space-y-6">
+      {/* 1. Top Stacked Banners (Persis Referensi Screenshot: 4 di Desktop, 3 di Mobile) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 space-y-2">
+        {/* Row 1: 728x90 Desktop / 320x50 Mobile */}
+        <AdBanner priority={true} slotName="Home Top Stacked Banner 1" className="!my-1" />
+        {/* Row 2: 728x90 Desktop / 320x50 Mobile */}
+        <AdBanner priority={true} slotName="Home Top Stacked Banner 2" className="!my-1" />
+        {/* Row 3: 728x90 Desktop / 320x50 Mobile */}
+        <AdBanner priority={true} slotName="Home Top Stacked Banner 3" className="!my-1" />
+        {/* Row 4: Khusus Desktop (728x90) */}
+        <div className="hidden md:block">
+          <AdBanner priority={true} specificType="728x90" slotName="Home Top Stacked Banner 4 Desktop" className="!my-1" />
+        </div>
+      </div>
+
+      {/* 2. Hero Section */}
       <HeroSection content={featured} />
 
       {/* Main Content Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 pb-16">
-        {/* Ads: Di bawah Hero Section */}
-        <AdBanner slotName="Home Hero Leaderboard" />
-
-        {/* 2. Trending Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 pb-12">
+        {/* 3. Trending Section */}
         <ContentRow
           title="Sedang Trending 🔥"
           subtitle="Tontonan paling ramai dibicarakan minggu ini"
@@ -36,10 +48,10 @@ export default function HomePage() {
           viewAllHref="/drama"
         />
 
-        {/* Ads: Native Banner 4:1 Antara Trending dan Drama Terbaru */}
+        {/* Ads: Native Banner 4:1 #1 di antara row konten 1 dan 2 */}
         <AdNativeBanner className="my-6" />
 
-        {/* 3. Drama Terbaru */}
+        {/* 4. Drama Terbaru */}
         <ContentRow
           title="Drama & TV Series Terbaru"
           subtitle="Episode terbaru dari serial drama pilihan"
@@ -47,10 +59,15 @@ export default function HomePage() {
           viewAllHref="/drama"
         />
 
-        {/* Ads: Antara Drama dan Film */}
-        <AdBanner slotName="Home In-Feed Banner #2" variant="compact" />
+        {/* Ads: Banner 300x250 Inline #1 (Desktop Only) */}
+        <div className="hidden md:flex justify-center my-4">
+          <AdSlot type="300x250" slotName="Home Inline 300x250 #1" />
+        </div>
 
-        {/* 4. Film Terbaru */}
+        {/* Ads: Native Banner 4:1 #2 di antara row konten 2 dan 3 */}
+        <AdNativeBanner className="my-6" />
+
+        {/* 5. Film Terbaru */}
         <ContentRow
           title="Film Pilihan ⭐"
           subtitle="Koleksi film bioskop blockbuster dan terpopuler"
@@ -58,7 +75,12 @@ export default function HomePage() {
           viewAllHref="/film"
         />
 
-        {/* 5. Tipe Tayangan Section (Menggantikan Genre) */}
+        {/* Ads: Banner 300x250 Inline #2 (Desktop Only) */}
+        <div className="hidden md:flex justify-center my-4">
+          <AdSlot type="300x250" slotName="Home Inline 300x250 #2" />
+        </div>
+
+        {/* 6. Tipe Tayangan Section */}
         <section className="bg-gradient-to-r from-gray-900/90 via-gray-900/60 to-gray-900/90 border border-gray-800/80 rounded-2xl p-6 sm:p-8">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="w-5 h-5 text-brand-500" />
@@ -117,8 +139,8 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Ads: Sebelum Footer */}
-        <AdBanner slotName="Home Bottom Leaderboard" />
+        {/* Ads: Banner 468x60 (Desktop) / 320x50 (Mobile) di antara section */}
+        <AdBanner slotName="Home In-Feed Mid Banner" variant="compact" className="my-6" />
       </div>
     </div>
   );
