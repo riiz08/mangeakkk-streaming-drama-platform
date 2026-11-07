@@ -1,54 +1,76 @@
-# Tambah Iklan Atas & Halaman Streaming + Hapus Teks "Sponsored"
+# Perbaikan Iklan: 8 Ads Variasi 2 Kolom + Floating Banner
 
 ## Ringkasan
 
-Tiga perubahan utama pada sistem iklan:
-1. Perbanyak banner iklan bertumpuk di atas halaman utama (sebelum hero) menjadi **8 banner di desktop** dan **4 banner di mobile**
-2. Tambahkan banner iklan bertumpuk di atas video player di halaman streaming menjadi **8 banner di desktop** dan **4 banner di mobile**
-3. Hapus seluruh teks label iklan seperti "Advertisement", "Sponsored Content", "Ads", dll dari semua komponen iklan
+Tiga perubahan pada sistem iklan:
+1. Bagian iklan di atas hero dan di atas video player diubah menjadi **8 unit dengan berbagai variasi ukuran**, ditampilkan dalam **flexbox 2 kolom di desktop dan 1 kolom di mobile**
+2. Floating Ad Banner dengan tombol close (sudah ada `FloatingAdBanner.tsx`, pastikan aktif dan tampil di semua halaman publik)
+3. Variasi tipe iklan yang digunakan bebas, tidak harus seragam 728x90
 
 ---
 
-## 1. Banner Atas Halaman Utama (Sebelum Hero)
+## 1. Blok 8 Iklan di Atas Hero (Halaman Utama)
 
-Ubah jumlah banner yang bertumpuk di paling atas halaman utama (sebelum hero section) menjadi:
+Ganti blok banner yang ada di atas hero section dengan komponen baru **`AdGridBlock`** (8 slot iklan).
 
-- **Desktop**: **8 banner 728x90** ditumpuk vertikal, dimuat dari atas ke bawah secara berurutan
-- **Mobile**: **4 banner 320x50** ditumpuk vertikal
+**Layout:**
+- Gunakan `flex flex-wrap` dengan 2 kolom di desktop (`md:w-1/2`) dan 1 kolom di mobile (`w-full`)
+- Total 8 unit iklan dalam satu blok
 
-Karena hanya ada 1 key untuk 728x90 dan 1 key untuk 320x50, ulangi (duplikat) banner yang sama untuk memenuhi jumlah tersebut — script iklan tetap sama, hanya di-render sebanyak N kali.
+**Variasi iklan yang digunakan (8 slot, kombinasi bebas):**
 
-Semua 8 banner di atas (di atas fold) dimuat dengan **priority** (tidak lazy load) agar tampil secepat mungkin.
+| Slot | Ukuran | Keterangan |
+|------|--------|------------|
+| 1 | 728x90 | Leaderboard — ditampilkan satu baris di desktop, full-width di mobile |
+| 2 | 728x90 | Leaderboard — col 2 di desktop |
+| 3 | 300x250 | Medium Rectangle — col 1 |
+| 4 | 300x250 | Medium Rectangle — col 2 |
+| 5 | 468x60 | Banner — col 1 |
+| 6 | 468x60 | Banner — col 2 |
+| 7 | 320x50 | Mobile Banner — col 1 |
+| 8 | 320x50 | Mobile Banner — col 2 |
+
+**Catatan:**
+- Di dalam tiap kolom, iklan di-`center` secara horizontal
+- Padding/gap antar slot iklan minimal agar tampak padat seperti referensi
 
 ---
 
-## 2. Banner Atas Halaman Streaming / Watch
+## 2. Blok 8 Iklan di Atas Video Player (Halaman Streaming & Film)
 
-Di halaman nonton (`/[slug]/[episode]`) dan halaman film (`/[slug]` untuk film), tambahkan banner bertumpuk di atas video player menjadi:
+Terapkan blok **`AdGridBlock`** yang sama (8 slot, 2 kolom desktop / 1 kolom mobile) tepat di atas video player di:
+- Halaman watch drama: `WatchView.tsx` — di atas elemen `VideoPlayer`
+- Halaman film: `ContentDetailView.tsx` — di atas elemen `VideoPlayer` di section "Putar Film"
 
-- **Desktop**: **8 banner 728x90** ditumpuk vertikal, di atas video player
-- **Mobile**: **4 banner 320x50** ditumpuk vertikal, di atas video player
-
-Semua banner di atas player dimuat dengan **priority** (tidak lazy load).
+Gunakan iklan dengan variasi ukuran yang sama seperti di atas (kombinasi 728x90, 300x250, 468x60, 320x50).
 
 ---
 
-## 3. Hapus Semua Teks Label Iklan
+## 3. Buat Komponen `AdGridBlock`
 
-Hapus semua teks label yang menandai konten sebagai iklan dari seluruh komponen ads. Komponen yang perlu dibersihkan:
+Buat komponen reusable `components/ads/AdGridBlock.tsx`:
+- Menerima array konfigurasi 8 slot iklan
+- Render dengan `flex flex-wrap` — tiap item `w-full md:w-1/2`
+- Tiap slot berisi satu unit `AdIframeBanner` dengan ukuran yang telah ditentukan
+- Semua slot dimuat dengan `priority={true}` agar langsung tampil tanpa lazy load
+- Tidak tampil di halaman `/admin`
 
-- `AdIframeBanner.tsx` — hapus teks **"Advertisement"** di atas setiap iframe banner
-- `AdNativeBanner.tsx` — hapus teks **"Sponsored Content (Native 4:1)"** di atas native banner
-- `AdSlot.tsx` — hapus teks **"Ads"** atau label serupa
-- `AdBanner.tsx` — pastikan tidak ada teks label visible
+---
 
-Setelah penghapusan, komponen iklan hanya menampilkan unit iklan itu sendiri tanpa label teks apapun.
+## 4. Floating Ad Banner dengan Tombol Close
+
+Komponen `FloatingAdBanner.tsx` sudah ada. Pastikan:
+- Aktif dan dimount di `app/layout.tsx` agar tampil di semua halaman publik
+- Memiliki tombol **X (Close)** yang terlihat jelas di pojok kanan atas
+- Setelah ditutup, state tersimpan di `sessionStorage` sehingga tidak muncul lagi dalam sesi yang sama
+- Tidak tampil di halaman `/admin`
+- Tambahkan variasi iklan di floating juga (468x60 desktop / 320x50 mobile)
 
 ---
 
 ## Catatan Teknis
-- Gunakan key/script iklan yang sudah ada, cukup duplikat render komponen-nya sebanyak yang diperlukan
+- Gunakan key/script iklan yang sudah ada di `AdIframeBanner.tsx`, tidak perlu key baru
 - Pastikan `bun run build` berhasil tanpa error
-- Halaman `/admin` tetap tidak menampilkan iklan apapun
+- Halaman `/admin` tetap bersih tanpa iklan apapun
 - Jangan ubah komponen atau halaman lain di luar scope ini
 
