@@ -1,92 +1,224 @@
-# Planning: Inisialisasi Proyek Streaming Platform Berbasis Next.js
+# 🎬 Mangeakkk — Streaming Drama & Film Platform
 
-## 1. Overview & Tujuan
-Membangun fondasi web aplikasi *streaming platform* modern dan responsif menggunakan **Next.js (App Router)**. Dokumen ini dirancang sebagai panduan tingkat tinggi (*high-level blueprint*) untuk dipahami dan dieksekusi oleh programmer atau model AI pelaksana.
+## Deskripsi Project
 
----
+Bangun website streaming (menonton) drama dan film menggunakan **Next.js (App Router)**. Website ini menampilkan katalog drama/film, halaman detail, dan player untuk menonton. Desain modern, dark-themed, responsif.
 
-## 2. Tech Stack & Dependensi Utama
-- **Core Framework**: [Next.js](https://nextjs.org/) (versi terbaru dengan **App Router**)
-- **Language**: TypeScript / JavaScript
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React / React Icons (opsional)
-- **Video Playback**: HTML5 Video Player dengan dukungan HLS/streaming (misal: HLS.js, Video.js, atau React Player)
-- **Aset Existing**: Memanfaatkan aset ikon yang sudah ada di direktori `favicon/`
+> **Catatan:** Asset logo dan favicon sudah tersedia di folder `public/`. Gunakan `public/logo/logo.svg` sebagai logo utama dan `public/favicon.ico` + isi folder `public/favicon/` untuk favicon/metadata.
 
 ---
 
-## 3. Rencana Arsitektur & Struktur Direktori (High-Level)
-Rekomendasi struktur folder berbasis Next.js App Router:
-```text
-streaming-platform/
-├── favicon/              # Aset favicon yang sudah ada (dipindah/ditautkan ke app/public)
-├── public/               # Asset statis, gambar poster, dan thumbnail
-├── src/
-│   ├── app/              # Next.js App Router
-│   │   ├── layout.tsx    # Root layout (Navbar, Footer, Font, Metadata)
-│   │   ├── page.tsx      # Beranda / Katalog video
-│   │   ├── watch/
-│   │   │   └── [id]/
-│   │   │       └── page.tsx  # Halaman pemutar video
-│   │   └── globals.css   # Konfigurasi Tailwind & styling global
-│   ├── components/       # Komponen UI modular
-│   │   ├── common/       # Navbar, Footer, Button, dsb.
-│   │   ├── catalog/      # VideoCard, VideoGrid, HeroBanner
-│   │   └── player/       # VideoPlayer (Client Component)
-│   ├── data/             # Mock data video / streaming list
-│   └── types/            # Tipe data TypeScript (Video, Category, dsb.)
-├── next.config.mjs
-├── package.json
-└── README.md
+## Issue 1 — Project Setup & Konfigurasi Awal
+
+- Inisialisasi project Next.js (App Router) dengan TypeScript di folder ini
+- Gunakan **Tailwind CSS** untuk styling
+- Konfigurasi metadata (title, description, favicon, open graph) menggunakan asset dari `public/favicon/`
+- Setup layout utama (`app/layout.tsx`) dengan font yang cocok (contoh: Inter atau Plus Jakarta Sans dari Google Fonts)
+- Buat file `.env.example` untuk variabel environment yang dibutuhkan nanti (API URL, dsb.)
+- Pastikan `public/logo/`, `public/favicon/`, dan `public/images/` tetap ada dan tidak tertimpa
+
+---
+
+## Issue 2 — Komponen Global & Layout
+
+Buat komponen-komponen global yang dipakai di seluruh halaman:
+
+### Navbar
+- Logo (`/logo/logo.svg`) di kiri, klik kembali ke home
+- Menu navigasi: **Home**, **Drama**, **Film**, **Genre**
+- Search bar (input teks, cukup UI dulu, belum perlu fungsional)
+- Responsif — hamburger menu di mobile
+
+### Footer
+- Logo, copyright, link sosial media (placeholder)
+- Link cepat: About, Contact, Privacy Policy, Terms
+
+### Layout Wrapper
+- Dark theme sebagai default (background gelap, teks terang)
+- Container responsif dengan max-width
+
+---
+
+## Issue 3 — Halaman Home
+
+Halaman utama website (`/`):
+
+- **Hero Section** — Banner besar dengan gambar/poster drama unggulan, judul, deskripsi singkat, tombol "Tonton Sekarang"
+- **Trending / Sedang Populer** — Horizontal scroll row berisi card drama/film (poster, judul, rating)
+- **Drama Terbaru** — Row card serupa
+- **Film Terbaru** — Row card serupa
+- **Genre Populer** — Grid atau row berisi badge/card genre (Action, Romance, Thriller, dll.)
+
+> Gunakan data dummy/mock untuk sementara. Buat file `lib/data/mock.ts` berisi array objek drama & film.
+
+---
+
+## Issue 4 — Halaman Katalog (Browse)
+
+Dua halaman katalog terpisah:
+
+### `/drama` — Daftar semua drama
+### `/film` — Daftar semua film
+
+Keduanya memiliki layout serupa:
+- Grid card (poster, judul, tahun, rating, genre tags)
+- Filter sidebar atau top-bar: **Genre**, **Tahun**, **Rating** (cukup UI, logic filter dari data mock)
+- Sort: Terbaru, Rating Tertinggi, A-Z
+- Pagination atau infinite scroll (pilih salah satu)
+
+---
+
+## Issue 5 — Halaman Detail Drama/Film
+
+Route: `/drama/[slug]` dan `/film/[slug]`
+
+Isi halaman:
+- **Backdrop/banner** besar (gambar landscape)
+- **Info utama**: poster, judul, sinopsis, genre, tahun rilis, durasi, rating, negara asal, sutradara, cast (nama + foto placeholder)
+- **Daftar Episode** (khusus drama) — List episode dengan thumbnail, judul episode, durasi. Klik episode → halaman watch
+- **Tombol "Tonton"** (untuk film, langsung ke halaman watch)
+- **Rekomendasi** — Row card drama/film serupa di bagian bawah
+
+---
+
+## Issue 6 — Halaman Watch (Player)
+
+Route: `/watch/[slug]` (atau `/watch/[slug]/[episode]` untuk drama)
+
+- **Video Player** — Gunakan komponen player HTML5 atau library seperti `react-player` / `vidstack`. Untuk saat ini cukup embed placeholder video (bisa pakai sample video URL atau dummy)
+- Judul episode / film yang sedang ditonton
+- **Navigasi episode** (khusus drama): tombol prev/next episode, dropdown pilih episode
+- **Info singkat** di bawah player: sinopsis episode, rating
+- Light/minimal UI agar fokus ke player
+
+---
+
+## Issue 7 — Halaman Genre
+
+Route: `/genre` — Grid semua genre yang tersedia
+Route: `/genre/[slug]` — List drama/film yang termasuk genre tersebut (layout sama seperti halaman katalog)
+
+---
+
+## Issue 8 — Search
+
+- Halaman `/search?q=...`
+- Tampilkan hasil pencarian berupa grid card
+- Pencarian dari data mock berdasarkan judul
+
+---
+
+## Issue 9 — UI Polish & Responsiveness
+
+- Pastikan semua halaman responsif (mobile, tablet, desktop)
+- Tambahkan loading skeleton/shimmer pada card dan halaman detail
+- Hover effects pada card (scale, shadow, overlay info)
+- Smooth scroll dan transisi antar halaman
+- Scroll-to-top button
+- Pastikan dark theme konsisten di semua halaman
+
+---
+
+## Issue 10 — SEO & Performance
+
+- Metadata per halaman (title, description, og:image) menggunakan Next.js `generateMetadata`
+- Sitemap (`sitemap.ts`)
+- Konfigurasi `robots.txt`
+- Optimasi gambar menggunakan `next/image`
+- Pastikan favicon dan web manifest terkonfigurasi dengan benar dari asset di `public/favicon/`
+
+---
+
+## Struktur Data Mock (Referensi)
+
+Berikut contoh struktur data yang digunakan untuk mock. Simpan di `lib/data/mock.ts`:
+
+```ts
+type Content = {
+  id: string;
+  slug: string;
+  title: string;
+  type: "drama" | "film";
+  poster: string;       // path gambar poster
+  backdrop: string;     // path gambar landscape
+  synopsis: string;
+  genre: string[];
+  year: number;
+  rating: number;       // 1-10
+  country: string;
+  director: string;
+  cast: { name: string; photo: string }[];
+  duration: string;     // "45 min/ep" atau "2h 15m"
+  totalEpisodes?: number;
+  episodes?: Episode[];
+};
+
+type Episode = {
+  number: number;
+  title: string;
+  thumbnail: string;
+  duration: string;
+  synopsis: string;
+  videoUrl: string;     // placeholder URL
+};
 ```
 
 ---
 
-## 4. Tahapan Pengerjaan (Milestones)
+## Tech Stack
 
-### Fase 1: Setup & Inisialisasi Proyek
-- [ ] Inisialisasi proyek Next.js dengan App Router dan Tailwind CSS di direktori saat ini.
-- [ ] Pindahkan/integrasikan file dari folder `favicon/` ke dalam konfigurasi metadata atau folder `public/` / `app/`.
-- [ ] Pastikan file `.gitignore` standar Next.js sudah aktif.
-
-### Fase 2: Layout Utama & Navigasi
-- [ ] Setup `RootLayout` dengan tema gelap (*dark theme default* khas platform streaming).
-- [ ] Buat komponen **Navbar**:
-  - Logo platform
-  - Menu navigasi dasar (Home, Movies, Series, Live)
-  - Fitur input pencarian (search bar)
-- [ ] Buat **Footer** sederhana dan responsif (desktop & mobile).
-
-### Fase 3: Halaman Beranda (Catalog & Discovery)
-- [ ] **Hero Banner**: Bagian atas halaman yang menampilkan highlight konten video utama lengkap dengan tombol *Play* dan sinopsis singkat.
-- [ ] **Katalog Video (Grid / Carousel)**: Menampilkan daftar video yang dikelompokkan per kategori/genre (Trending, Baru Dirilis, Populer).
-- [ ] **Video Card**: Menampilkan poster/thumbnail, judul, durasi/rating, dan efek transisi saat di-hover.
-
-### Fase 4: Halaman Tontonan (Watch Page)
-- [ ] Buat halaman dinamis `app/watch/[id]/page.tsx`.
-- [ ] Integrasikan komponen pemutar video (`VideoPlayer`):
-  - Menandai komponen dengan `'use client'`.
-  - Kontrol standar: Play/Pause, Timeline/Seekbar, Pengaturan Volume, dan Mode Layar Penuh (*Fullscreen*).
-  - Dukungan pemutaran video streaming (URL MP4 publik atau HLS `.m3u8` test stream).
-- [ ] Tampilkan detail informasi video (judul, sinopsis, genre, tanggal rilis) serta daftar rekomendasi video terkait di samping atau bawah pemutar.
-
-### Fase 5: Mock Data & Integrasi State
-- [ ] Buat file data dummy (JSON / TypeScript) yang berisi daftar item video contoh dengan struktur:
-  - `id`, `title`, `description`, `thumbnailUrl`, `videoUrl`, `duration`, `genre`.
-- [ ] Hubungkan mock data ke halaman katalog utama dan halaman tontonan dinamis.
-
-### Fase 6: Build Check & Dokumentasi
-- [ ] Jalankan pengujian build (`npm run build` / `pnpm build`) untuk memastikan tidak ada error TypeScript maupun sintaks.
-- [ ] Siapkan file `README.md` dengan instruksi singkat cara menjalankan proyek di lingkungan lokal.
+| Kategori | Pilihan |
+|---|---|
+| Framework | Next.js 15+ (App Router) |
+| Bahasa | TypeScript |
+| Styling | Tailwind CSS |
+| Video Player | Custom HTML5 Video Player |
+| Icons | `lucide-react` |
+| State / Data | Mock data lokal (`lib/data/mock.ts`) |
 
 ---
 
-## 5. Catatan Implementasi untuk Developer / Model Pelaksana
-1. **Pemisahan Server & Client Components**:
-   - Gunakan Server Components secara default untuk layout, halaman katalog, dan data fetching.
-   - Gunakan Client Component (`'use client'`) hanya pada elemen interaktif seperti `VideoPlayer` dan dropdown navigasi.
-2. **Kerapian & Modularitas**:
-   - Pisahkan logika pemutar video ke dalam komponen tersendiri agar mudah diganti atau dihubungkan ke backend streaming di masa mendatang.
-3. **Desain Mobile-Friendly**:
-   - Pastikan layout grid video dan ukuran video player beradaptasi dengan baik di berbagai ukuran layar.
+## Struktur Folder (Target)
 
+```
+├── app/
+│   ├── layout.tsx            # Root layout + metadata + font
+│   ├── page.tsx              # Home
+│   ├── drama/
+│   │   ├── page.tsx          # Katalog drama
+│   │   └── [slug]/page.tsx   # Detail drama
+│   ├── film/
+│   │   ├── page.tsx          # Katalog film
+│   │   └── [slug]/page.tsx   # Detail film
+│   ├── watch/
+│   │   └── [slug]/page.tsx   # Player page
+│   ├── genre/
+│   │   ├── page.tsx          # Semua genre
+│   │   └── [slug]/page.tsx   # Drama/film per genre
+│   └── search/
+│       └── page.tsx          # Hasil pencarian
+├── components/
+│   ├── layout/
+│   │   ├── Navbar.tsx
+│   │   └── Footer.tsx
+│   ├── ui/
+│   │   ├── ContentCard.tsx   # Card poster drama/film
+│   │   ├── HeroSection.tsx
+│   │   ├── ContentRow.tsx    # Horizontal scroll row
+│   │   ├── GenreBadge.tsx
+│   │   ├── EpisodeList.tsx
+│   │   ├── VideoPlayer.tsx
+│   │   ├── SearchBar.tsx
+│   │   ├── FilterBar.tsx
+│   │   └── Skeleton.tsx
+├── lib/
+│   ├── data/
+│   │   └── mock.ts           # Data dummy
+│   └── utils.ts              # Utility functions
+├── public/
+│   ├── favicon.ico
+│   ├── favicon/              # (sudah ada)
+│   ├── logo/                 # (sudah ada - logo.svg, logo.png, mangeakkk.png)
+│   └── images/               # Poster & backdrop placeholder
+└── tailwind.config.ts
+```
