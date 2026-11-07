@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, Menu, X, Film, Tv, Flame, Compass } from "lucide-react";
+import { Search, Menu, X, Film, Tv, Flame } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -16,7 +16,6 @@ export default function Navbar() {
     { href: "/", label: "Home", icon: Flame },
     { href: "/drama", label: "Drama", icon: Tv },
     { href: "/film", label: "Film", icon: Film },
-    { href: "/genre", label: "Genre", icon: Compass },
   ];
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -77,7 +76,7 @@ export default function Navbar() {
             <form onSubmit={handleSearchSubmit} className="relative w-full">
               <input
                 type="text"
-                placeholder="Cari drama, film, genre..."
+                placeholder="Cari drama, film, sutradara..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-gray-900/90 text-sm text-gray-200 placeholder-gray-500 rounded-full pl-9 pr-4 py-1.5 border border-gray-700/60 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all"
@@ -105,7 +104,7 @@ export default function Navbar() {
           <form onSubmit={handleSearchSubmit} className="relative w-full">
             <input
               type="text"
-              placeholder="Cari judul atau genre..."
+              placeholder="Cari drama atau film..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-gray-900 text-sm text-gray-200 placeholder-gray-500 rounded-full pl-9 pr-4 py-2 border border-gray-700 focus:border-brand-500 focus:outline-none"
@@ -113,7 +112,7 @@ export default function Navbar() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           </form>
 
-          <div className="grid grid-cols-2 gap-2 pt-1">
+          <div className="grid grid-cols-3 gap-2 pt-1">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const active = isActive(link.href);
@@ -122,7 +121,7 @@ export default function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     active
                       ? "bg-brand-600 text-white"
                       : "bg-gray-900/60 text-gray-300 hover:bg-gray-800 hover:text-white"

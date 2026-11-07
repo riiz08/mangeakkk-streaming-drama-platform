@@ -2,8 +2,9 @@
 
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, Film, AlertCircle } from "lucide-react";
+import { Search, AlertCircle } from "lucide-react";
 import ContentCard from "@/components/ui/ContentCard";
+import AdBanner from "@/components/ads/AdBanner";
 import { searchContents } from "@/lib/data/mock";
 
 export default function SearchView() {
@@ -24,7 +25,7 @@ export default function SearchView() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       {/* Search Header */}
-      <div className="max-w-2xl mx-auto text-center mb-10">
+      <div className="max-w-2xl mx-auto text-center mb-8">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-4">
           Pencarian Tontonan
         </h1>
@@ -34,7 +35,7 @@ export default function SearchView() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ketik judul drama, film, sutradara, atau genre..."
+            placeholder="Ketik judul drama, film, atau sutradara..."
             className="w-full bg-gray-900 text-white placeholder-gray-500 rounded-2xl pl-12 pr-28 py-3.5 border border-gray-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 text-sm sm:text-base shadow-xl"
             autoFocus
           />
@@ -47,6 +48,9 @@ export default function SearchView() {
           </button>
         </form>
       </div>
+
+      {/* Ads: 1x AdBanner di atas hasil pencarian */}
+      <AdBanner slotName="Search Top Leaderboard" variant="compact" className="mb-6" />
 
       {/* Results Section */}
       <div>
@@ -72,11 +76,14 @@ export default function SearchView() {
             <AlertCircle className="w-10 h-10 text-gray-500 mx-auto mb-3" />
             <h3 className="text-white font-semibold text-lg mb-1">Tidak Ditemukan</h3>
             <p className="text-gray-400 text-xs sm:text-sm">
-              Maaf, tidak ada drama atau film yang cocok dengan kata kunci &quot;{query}&quot;. Cobalah kata kunci lain seperti &quot;Romance&quot;, &quot;Squid&quot;, atau &quot;Korea&quot;.
+              Maaf, tidak ada drama atau film yang cocok dengan kata kunci &quot;{query}&quot;. Cobalah kata kunci lain seperti &quot;Squid&quot;, &quot;Korea&quot;, atau &quot;Nolan&quot;.
             </p>
           </div>
         ) : null}
       </div>
+
+      {/* Ads: 1x AdBanner di bawah hasil pencarian */}
+      <AdBanner slotName="Search Bottom Leaderboard" className="mt-10" />
     </div>
   );
 }

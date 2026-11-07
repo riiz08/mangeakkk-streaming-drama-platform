@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, Globe, Share2, MessageCircle } from "lucide-react";
+import { Heart, Globe, MessageCircle, Share2 } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -24,7 +24,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-xs text-gray-400 leading-relaxed">
-              Platform streaming modern untuk menonton drama Korea, Asia, dan film pilihan berkualitas tinggi dengan pengalaman visual terbaik.
+              Platform streaming modern untuk menonton TV Series, drama Korea, Asia, dan film bioskop pilihan berkualitas tinggi.
             </p>
             <div className="flex items-center gap-3 pt-1">
               <a href="#" className="p-2 rounded-full bg-gray-900 hover:bg-brand-600 hover:text-white transition-colors" aria-label="Website">
@@ -44,20 +44,20 @@ export default function Footer() {
             <h4 className="text-white font-semibold text-sm tracking-wider uppercase">Jelajahi</h4>
             <ul className="space-y-2 text-xs">
               <li><Link href="/" className="hover:text-brand-500 transition-colors">Beranda</Link></li>
-              <li><Link href="/drama" className="hover:text-brand-500 transition-colors">Drama Terbaru</Link></li>
-              <li><Link href="/film" className="hover:text-brand-500 transition-colors">Film Pilihan</Link></li>
-              <li><Link href="/genre" className="hover:text-brand-500 transition-colors">Daftar Genre</Link></li>
+              <li><Link href="/drama" className="hover:text-brand-500 transition-colors">Drama & TV Series</Link></li>
+              <li><Link href="/film" className="hover:text-brand-500 transition-colors">Film Bioskop</Link></li>
+              <li><Link href="/search" className="hover:text-brand-500 transition-colors">Pencarian</Link></li>
             </ul>
           </div>
 
-          {/* Genres */}
+          {/* Tipe Konten */}
           <div className="space-y-3">
-            <h4 className="text-white font-semibold text-sm tracking-wider uppercase">Genre Populer</h4>
+            <h4 className="text-white font-semibold text-sm tracking-wider uppercase">Kategori</h4>
             <ul className="space-y-2 text-xs">
-              <li><Link href="/genre/romance" className="hover:text-brand-500 transition-colors">Romance</Link></li>
-              <li><Link href="/genre/action" className="hover:text-brand-500 transition-colors">Action</Link></li>
-              <li><Link href="/genre/thriller" className="hover:text-brand-500 transition-colors">Thriller</Link></li>
-              <li><Link href="/genre/comedy" className="hover:text-brand-500 transition-colors">Comedy</Link></li>
+              <li><Link href="/drama" className="hover:text-brand-500 transition-colors">Serial Drama Korea</Link></li>
+              <li><Link href="/drama" className="hover:text-brand-500 transition-colors">TV Series Trending</Link></li>
+              <li><Link href="/film" className="hover:text-brand-500 transition-colors">Film Pilihan</Link></li>
+              <li><Link href="/film" className="hover:text-brand-500 transition-colors">Film Blockbuster</Link></li>
             </ul>
           </div>
 
@@ -68,7 +68,7 @@ export default function Footer() {
               <li><a href="#" className="hover:text-brand-500 transition-colors">Tentang Kami</a></li>
               <li><a href="#" className="hover:text-brand-500 transition-colors">Kebijakan Privasi</a></li>
               <li><a href="#" className="hover:text-brand-500 transition-colors">Ketentuan Layanan</a></li>
-              <li><a href="#" className="hover:text-brand-500 transition-colors">Kontak Support</a></li>
+              <li><a href="#" className="hover:text-brand-500 transition-colors">Pasang Iklan</a></li>
             </ul>
           </div>
         </div>
@@ -76,7 +76,7 @@ export default function Footer() {
         <div className="border-t border-gray-800/80 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-400 gap-3">
           <p>© {new Date().getFullYear()} Mangeakkk. All rights reserved.</p>
           <p className="flex items-center gap-1">
-            Dibuat dengan <Heart className="w-3.5 h-3.5 text-brand-500 fill-brand-500 inline" /> untuk pecinta drama & film.
+            Dibuat dengan <Heart className="w-3.5 h-3.5 text-brand-500 fill-brand-500 inline" /> untuk pecinta streaming.
           </p>
         </div>
       </div>

@@ -8,7 +8,7 @@
 ---
 
 ## 📌 Gambaran Umum
-**Mangeakkk** adalah platform streaming web modern untuk menonton drama Korea, Asia, dan film bioskop dengan pengalaman visual berkualitas tinggi. Proyek ini dibangun menggunakan **Next.js (App Router)**, **TypeScript**, dan **Tailwind CSS**.
+**Mangeakkk** adalah platform streaming web modern untuk menonton serial drama Korea, Asia, dan film bioskop dengan pengalaman visual berkualitas tinggi. Proyek ini dibangun menggunakan **Next.js 15 (App Router)**, **TypeScript**, dan **Tailwind CSS**.
 
 ---
 
@@ -17,31 +17,30 @@
 - 🏠 **Halaman Beranda Interaktif**:
   - Hero banner unggulan beresolusi tinggi dengan tombol *Tonton Sekarang* dan detail info.
   - Horizontal carousels: *Sedang Trending*, *Drama Terbaru*, dan *Film Pilihan*.
-  - Eksplorasi kategori dan genre.
-- 📺 **Katalog Drama & Film**:
-  - Filter interaktif berdasarkan **Genre** dan **Tahun**.
-  - Opsi pengurutan (*Terbaru*, *Rating Tertinggi*, *Judul A-Z*).
-  - Indikator jumlah tayangan yang ditemukan.
-- 📑 **Halaman Detail Komprehensif**:
-  - Backdrop banner besar dan poster berkualitas tinggi.
-  - Detail sinopsis, rating, tahun, durasi, negara, sutradara, dan daftar aktor pemeran.
-  - Daftar episode lengkap dengan durasi dan sinopsis tiap episode (khusus serial drama).
-  - Rekomendasi tayangan terkait berdasarkan kesamaan genre.
+  - Pemilihan tipe tontonan (*TV Series* vs *Film Bioskop*).
+- 🧭 **Struktur Routing SEO-Friendly**:
+  - **Serial Drama**: Nonton langsung di `/[slug-drama]/[slug-episode]` (contoh: `/queen-of-tears/episode-1`).
+  - **Film Bioskop**: Detail dan pemutar film langsung di `/[slug-film]` (contoh: `/dune-part-two`).
+  - **Katalog**: `/drama` (TV Series) dan `/film` (Film Bioskop).
+- 🏷️ **Sistem Badge Visual (Pengganti Rating)**:
+  - 🔥 **HOT**: Ditampilkan pada serial drama yang sedang trending.
+  - 🆕 **NEW**: Menandai serial drama yang memiliki episode baru.
+  - ⭐ **Pilihan**: Kurasi film bioskop rekomendasi editor.
+  - 🎬 **Drama Unggulan**: Badge eksklusif pada banner hero utama.
+- 📢 **Ads Placement (Slot Iklan Komprehensif)**:
+  - Slot iklan banner responsif (`AdBanner`) di Header, Footer, Hero, dan di antara setiap baris konten.
+  - Box iklan inline/sidebar (`AdSlot`) di samping pemutar video dan di dalam grid katalog setiap 8 item.
 - ▶️ **Pemutar Video (Video Player)**:
   - Pemutar video responsif dengan tombol play/pause, seekbar/timeline, pengaturan volume, mute, dan mode fullscreen.
   - Navigasi episode cepat (*Episode Sebelumnya* / *Episode Selanjutnya*) serta daftar pilihan episode di samping player.
   - Fitur simpan ke bookmark dan bagikan tautan.
-- 🏷️ **Eksplorasi Genre**:
-  - Halaman indeks seluruh genre `/genre`.
-  - Halaman katalog khusus per genre `/genre/[slug]`.
 - 🔍 **Pencarian Cepat**:
-  - Halaman `/search?q=...` dengan pencarian judul, sinopsis, sutradara, negara, dan genre.
+  - Halaman `/search?q=...` dengan pencarian judul, sinopsis, sutradara, dan negara.
 - 📱 **Desain Responsif & Tema Gelap (Dark Mode)**:
   - Tampilan elegan, responsif untuk layar smartphone, tablet, maupun desktop.
 - 🚀 **SEO & Performance**:
-  - Metadata OpenGraph dinamis di setiap halaman.
+  - Metadata OpenGraph dinamis di setiap halaman konten dan episode.
   - Otomatis membuat `sitemap.xml` dan `robots.txt`.
-  - Dukungan favicon dan manifest lengkap.
 
 ---
 
@@ -61,25 +60,23 @@
 
 ```text
 ├── app/
-│   ├── layout.tsx            # Root layout + metadata + favicon
+│   ├── layout.tsx            # Root layout + metadata + header/footer ad banner
 │   ├── page.tsx              # Beranda (Hero, Trending, Rekomendasi)
 │   ├── globals.css           # Styling Tailwind & scrollbar
 │   ├── robots.ts             # Robots.txt generator
 │   ├── sitemap.ts            # Sitemap.xml generator
+│   ├── [slug]/
+│   │   ├── page.tsx          # Detail drama / Detail & player film bioskop
+│   │   └── [episode]/
+│   │       └── page.tsx      # Pemutar video episode serial drama
 │   ├── drama/
-│   │   ├── page.tsx          # Katalog drama
-│   │   └── [slug]/page.tsx   # Detail drama & daftar episode
+│   │   └── page.tsx          # Katalog serial drama
 │   ├── film/
-│   │   ├── page.tsx          # Katalog film
-│   │   └── [slug]/page.tsx   # Detail film
-│   ├── watch/
-│   │   └── [slug]/page.tsx   # Pemutar video & kontrol episode
-│   ├── genre/
-│   │   ├── page.tsx          # Direktori genre
-│   │   └── [slug]/page.tsx   # Filter tayangan per genre
+│   │   └── page.tsx          # Katalog film bioskop
 │   └── search/
 │       └── page.tsx          # Pencarian tayangan
 ├── components/
+│   ├── ads/                  # AdBanner (Leaderboard) & AdSlot (Sidebar/Grid)
 │   ├── catalog/              # Komponen filter & katalog
 │   ├── detail/               # Komponen tampilan detail
 │   ├── layout/               # Navbar & Footer

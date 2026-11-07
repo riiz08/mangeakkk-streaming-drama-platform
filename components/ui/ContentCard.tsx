@@ -1,8 +1,9 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Star, Play } from "lucide-react";
+import { Play } from "lucide-react";
 import { Content } from "@/lib/data/mock";
+import BadgeLabel from "./BadgeLabel";
 
 interface ContentCardProps {
   content: Content;
@@ -10,7 +11,8 @@ interface ContentCardProps {
 }
 
 export default function ContentCard({ content, priority = false }: ContentCardProps) {
-  const detailUrl = `/${content.type}/${content.slug}`;
+  // New route: /[slug]
+  const detailUrl = `/${content.slug}`;
 
   return (
     <div className="group relative flex flex-col rounded-xl overflow-hidden bg-gray-900/60 border border-gray-800/80 hover:border-brand-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-brand-500/10 hover:-translate-y-1">
@@ -32,17 +34,18 @@ export default function ContentCard({ content, priority = false }: ContentCardPr
           </div>
         </div>
 
-        {/* Top Badges */}
-        <div className="absolute top-2 left-2 flex items-center gap-1.5">
-          <span className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded bg-black/70 backdrop-blur-md text-brand-400 border border-brand-500/30">
-            {content.type === "drama" ? "Drama" : "Film"}
+        {/* Top Badges (Left: Type) */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+          <span className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded bg-black/75 backdrop-blur-md text-brand-400 border border-brand-500/30">
+            {content.type === "tv-series" ? "TV Series" : "Film"}
           </span>
         </div>
 
-        {/* Rating Badge */}
-        <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-amber-400 text-xs font-semibold border border-amber-500/20">
-          <Star className="w-3 h-3 fill-amber-400" />
-          <span>{content.rating}</span>
+        {/* Top Badges (Right: HOT, NEW, Pilihan) */}
+        <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
+          {content.isTrending && <BadgeLabel type="hot" size="sm" />}
+          {content.hasNewEpisode && <BadgeLabel type="new" size="sm" />}
+          {content.isPilihan && <BadgeLabel type="pilihan" size="sm" />}
         </div>
       </Link>
 
@@ -55,7 +58,9 @@ export default function ContentCard({ content, priority = false }: ContentCardPr
         </Link>
         <div className="flex items-center justify-between text-xs text-gray-400 mt-1">
           <span>{content.year}</span>
-          <span className="truncate max-w-[110px] text-gray-500">{content.genre[0]}</span>
+          <span className="text-gray-500">
+            {content.type === "tv-series" ? `${content.totalEpisodes || content.episodes?.length || 0} Ep` : content.duration}
+          </span>
         </div>
       </div>
     </div>

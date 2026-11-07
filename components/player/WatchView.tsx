@@ -1,48 +1,51 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Star, Calendar, Clock, Share2, Bookmark } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Calendar, Clock, Share2, Bookmark } from "lucide-react";
 import { Content, Episode } from "@/lib/data/mock";
 import VideoPlayer from "@/components/ui/VideoPlayer";
 import EpisodeList from "@/components/ui/EpisodeList";
-import GenreBadge from "@/components/ui/GenreBadge";
+import BadgeLabel from "@/components/ui/BadgeLabel";
+import AdBanner from "@/components/ads/AdBanner";
+import AdSlot from "@/components/ads/AdSlot";
 
 interface WatchViewProps {
   content: Content;
-  initialEpisode?: number;
+  currentEpisodeSlug: string;
 }
 
-export default function WatchView({ content, initialEpisode = 1 }: WatchViewProps) {
+export default function WatchView({ content, currentEpisodeSlug }: WatchViewProps) {
+  const router = useRouter();
   const episodes = content.episodes || [];
-  const [currentEpNum, setCurrentEpNum] = useState<number>(initialEpisode);
   const [bookmarked, setBookmarked] = useState(false);
 
-  // Active episode object
+  // Active episode
   const currentEpisode: Episode | undefined =
-    episodes.find((ep) => ep.number === currentEpNum) || episodes[0];
+    episodes.find((ep) => ep.slug === currentEpisodeSlug) || episodes[0];
 
   const currentVideoUrl = currentEpisode ? currentEpisode.videoUrl : "";
-  const currentIndex = episodes.findIndex((ep) => ep.number === currentEpNum);
+  const currentIndex = episodes.findIndex((ep) => ep.slug === currentEpisodeSlug);
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < episodes.length - 1;
 
   const handlePrev = () => {
     if (hasPrev) {
-      setCurrentEpNum(episodes[currentIndex - 1].number);
+      router.push(`/${content.slug}/${episodes[currentIndex - 1].slug}`);
     }
   };
 
   const handleNext = () => {
     if (hasNext) {
-      setCurrentEpNum(episodes[currentIndex + 1].number);
+      router.push(`/${content.slug}/${episodes[currentIndex + 1].slug}`);
     }
   };
 
   const handleShare = () => {
     if (typeof window !== "undefined") {
       navigator.clipboard?.writeText(window.location.href);
-      alert("Tautan tontonan berhasil disalin ke clipboard!");
+      alert("Tautan episode berhasil disalin ke clipboard!");
     }
   };
 
@@ -51,11 +54,11 @@ export default function WatchView({ content, initialEpisode = 1 }: WatchViewProp
       {/* Back button & Title header */}
       <div className="flex items-center justify-between mb-4">
         <Link
-          href={`/${content.type}/${content.slug}`}
+          href={`/${content.slug}`}
           className="inline-flex items-center gap-2 text-xs sm:text-sm text-gray-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Kembali ke Detail {content.type === "drama" ? "Drama" : "Film"}</span>
+          <span>Kembali ke Detail {content.title}</span>
         </Link>
 
         <div className="flex items-center gap-2">
@@ -81,23 +84,25 @@ export default function WatchView({ content, initialEpisode = 1 }: WatchViewProp
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Ads: 1x AdBanner di atas video player */}
+      <AdBanner slotName="Player Top Leaderboard" variant="compact" className="my-3" />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-2">
         {/* Left Column: Player & Info (2 cols on large screen) */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4">
           {/* Video Player */}
           <VideoPlayer
             videoUrl={currentVideoUrl}
             poster={currentEpisode?.thumbnail || content.backdrop}
-            title={`${content.title} ${
-              content.type === "drama" && currentEpisode
-                ? `- ${currentEpisode.title}`
-                : ""
-            }`}
+            title={`${content.title} ${currentEpisode ? `- ${currentEpisode.title}` : ""}`}
             hasPrev={hasPrev}
             hasNext={hasNext}
             onPrevEpisode={handlePrev}
             onNextEpisode={handleNext}
           />
+
+          {/* Ads: 1x AdBanner di bawah video player */}
+          <AdBanner slotName="Player Mid In-Feed Banner" variant="compact" className="my-4" />
 
           {/* Under player info */}
           <div className="bg-gray-900/50 border border-gray-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
@@ -106,18 +111,17 @@ export default function WatchView({ content, initialEpisode = 1 }: WatchViewProp
                 <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                   {content.title}
                 </h1>
-                {content.type === "drama" && currentEpisode && (
+                {currentEpisode && (
                   <p className="text-brand-400 font-semibold text-sm mt-0.5">
                     {currentEpisode.title}
                   </p>
                 )}
               </div>
 
+              {/* Badges */}
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-black/50 text-amber-400 text-xs font-semibold border border-amber-400/20">
-                  <Star className="w-3.5 h-3.5 fill-amber-400" />
-                  <span>{content.rating}</span>
-                </div>
+                {content.isTrending && <BadgeLabel type="hot" size="sm" />}
+                {content.hasNewEpisode && <BadgeLabel type="new" size="sm" />}
               </div>
             </div>
 
@@ -135,52 +139,38 @@ export default function WatchView({ content, initialEpisode = 1 }: WatchViewProp
               <span>{content.country}</span>
             </div>
 
-            <div className="flex flex-wrap gap-2 pt-1">
-              {content.genre.map((g) => (
-                <GenreBadge key={g} genre={g} />
-              ))}
-            </div>
-
             <p className="text-gray-300 text-xs sm:text-sm leading-relaxed pt-2 border-t border-gray-800">
               {currentEpisode?.synopsis || content.synopsis}
             </p>
           </div>
         </div>
 
-        {/* Right Column: Episode selector (or drama list) */}
-        <div className="space-y-4">
+        {/* Right Column: Episode selector & Sidebar Ad */}
+        <div className="space-y-6">
           <div className="bg-gray-900/50 border border-gray-800/80 rounded-2xl p-5">
             <h2 className="text-lg font-bold text-white mb-4 flex items-center justify-between">
-              <span>{content.type === "drama" ? "Pilih Episode" : "Tentang Film"}</span>
-              {content.type === "drama" && (
-                <span className="text-xs font-normal text-gray-400">
-                  {episodes.length} Episode
-                </span>
-              )}
+              <span>Pilih Episode</span>
+              <span className="text-xs font-normal text-gray-400">
+                {episodes.length} Episode
+              </span>
             </h2>
 
-            {content.type === "drama" && episodes.length > 0 ? (
-              <div className="max-h-[600px] overflow-y-auto pr-1 no-scrollbar space-y-2">
-                <EpisodeList
-                  slug={content.slug}
-                  episodes={episodes}
-                  currentEpisode={currentEpNum}
-                  onSelectEpisode={(epNum) => setCurrentEpNum(epNum)}
-                />
-              </div>
-            ) : (
-              <div className="space-y-3 text-xs text-gray-300">
-                <p>{content.synopsis}</p>
-                <div className="pt-3 border-t border-gray-800 space-y-1.5">
-                  <p><strong className="text-gray-400">Sutradara:</strong> {content.director}</p>
-                  <p><strong className="text-gray-400">Durasi:</strong> {content.duration}</p>
-                  <p><strong className="text-gray-400">Rilis:</strong> {content.releaseDate || content.year}</p>
-                </div>
-              </div>
-            )}
+            <div className="max-h-[500px] overflow-y-auto pr-1 no-scrollbar space-y-2">
+              <EpisodeList
+                slug={content.slug}
+                episodes={episodes}
+                currentEpisodeSlug={currentEpisode?.slug}
+              />
+            </div>
           </div>
+
+          {/* Ads: 1x AdSlot di sidebar */}
+          <AdSlot slotName="Player Sidebar Sponsor" />
         </div>
       </div>
+
+      {/* Ads: 1x AdBanner di bawah daftar episode, sebelum Footer */}
+      <AdBanner slotName="Watch Page Pre-Footer Banner" className="mt-10" />
     </div>
   );
 }

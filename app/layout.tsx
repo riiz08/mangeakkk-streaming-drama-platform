@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import AdBanner from "@/components/ads/AdBanner";
 
 export const metadata: Metadata = {
   title: "Mangeakkk — Nonton Streaming Drama & Film Subtitle Indonesia",
   description:
-    "Platform streaming drama Korea, film bioskop, dan serial pilihan dengan kualitas tinggi dan pengalaman menonton terbaik.",
+    "Platform streaming drama Korea, serial TV, dan film bioskop pilihan dengan kualitas tinggi dan pengalaman menonton terbaik.",
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -36,7 +37,19 @@ export default function RootLayout({
     <html lang="id" className="dark">
       <body className="min-h-screen flex flex-col bg-[#0b0f19] text-gray-100 antialiased selection:bg-brand-500 selection:text-white">
         <Navbar />
+
+        {/* Global Sticky / Top Ad Banner */}
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+          <AdBanner slotName="Header Sticky Sponsor" variant="slim" className="my-2" />
+        </div>
+
         <main className="flex-1 w-full">{children}</main>
+
+        {/* Global Footer Ad Banner */}
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+          <AdBanner slotName="Pre-Footer Global Sponsor" />
+        </div>
+
         <Footer />
       </body>
     </html>

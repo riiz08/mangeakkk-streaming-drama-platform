@@ -4,8 +4,8 @@ import CatalogView from "@/components/catalog/CatalogView";
 import { getDramaList } from "@/lib/data/mock";
 
 export const metadata: Metadata = {
-  title: "Katalog Drama — Mangeakkk",
-  description: "Nonton drama Korea dan Asia terlengkap dengan subtitle Indonesia.",
+  title: "Katalog Serial Drama Korea & TV Series — Mangeakkk",
+  description: "Nonton drama Korea dan serial TV Asia terlengkap dengan subtitle Indonesia.",
 };
 
 export default function DramaPage() {
@@ -13,10 +13,10 @@ export default function DramaPage() {
 
   return (
     <CatalogView
-      type="drama"
+      type="tv-series"
       initialItems={dramas}
-      title="Katalog Drama"
-      description="Jelajahi dan nikmati serial drama terbaik dari berbagai genre, mulai dari romantis hingga misteri thriller."
+      title="Katalog Drama & TV Series"
+      description="Jelajahi dan nikmati serial drama terbaik dengan episode terlengkap dan kualitas visual prima."
     />
   );
 }

@@ -1,224 +1,132 @@
-# 🎬 Mangeakkk — Streaming Drama & Film Platform
+# 🔧 Refactor: Perbaikan Route, Sistem Badge, & Penambahan Ads Placement
 
-## Deskripsi Project
+## Gambaran Umum
 
-Bangun website streaming (menonton) drama dan film menggunakan **Next.js (App Router)**. Website ini menampilkan katalog drama/film, halaman detail, dan player untuk menonton. Desain modern, dark-themed, responsif.
-
-> **Catatan:** Asset logo dan favicon sudah tersedia di folder `public/`. Gunakan `public/logo/logo.svg` sebagai logo utama dan `public/favicon.ico` + isi folder `public/favicon/` untuk favicon/metadata.
+Refactor platform streaming Mangeakkk untuk memperbaiki struktur routing agar SEO-friendly, mengganti sistem rating dengan sistem badge, menghapus fitur genre dan menggantinya dengan tipe konten, serta menambahkan slot iklan (ads placement) di seluruh halaman.
 
 ---
 
-## Issue 1 — Project Setup & Konfigurasi Awal
+## Issue 1 — Restructure Routing (SEO-Friendly)
 
-- Inisialisasi project Next.js (App Router) dengan TypeScript di folder ini
-- Gunakan **Tailwind CSS** untuk styling
-- Konfigurasi metadata (title, description, favicon, open graph) menggunakan asset dari `public/favicon/`
-- Setup layout utama (`app/layout.tsx`) dengan font yang cocok (contoh: Inter atau Plus Jakarta Sans dari Google Fonts)
-- Buat file `.env.example` untuk variabel environment yang dibutuhkan nanti (API URL, dsb.)
-- Pastikan `public/logo/`, `public/favicon/`, dan `public/images/` tetap ada dan tidak tertimpa
+### Masalah
+Route `/watch/[slug]` saat ini tidak memiliki halaman listing sendiri, sehingga dianggap buruk oleh SEO. Route terasa "terpisah" dari konten utama.
 
----
+### Perubahan
 
-## Issue 2 — Komponen Global & Layout
+**Hapus seluruh route `/watch/`** dan pindahkan logika menonton langsung ke slug konten:
 
-Buat komponen-komponen global yang dipakai di seluruh halaman:
+| Sebelum | Sesudah | Keterangan |
+|---|---|---|
+| `/watch/queen-of-tears?ep=1` | `/queen-of-tears/episode-1` | Nonton drama episode tertentu |
+| `/watch/dune-part-two` | `/dune-part-two` | Nonton film langsung dari slug |
+| `/drama/queen-of-tears` | `/queen-of-tears` | Detail drama (tetap ada, sekaligus jadi landing page) |
+| `/film/dune-part-two` | `/dune-part-two` | Detail film (tetap ada, langsung bisa tonton) |
 
-### Navbar
-- Logo (`/logo/logo.svg`) di kiri, klik kembali ke home
-- Menu navigasi: **Home**, **Drama**, **Film**, **Genre**
-- Search bar (input teks, cukup UI dulu, belum perlu fungsional)
-- Responsif — hamburger menu di mobile
-
-### Footer
-- Logo, copyright, link sosial media (placeholder)
-- Link cepat: About, Contact, Privacy Policy, Terms
-
-### Layout Wrapper
-- Dark theme sebagai default (background gelap, teks terang)
-- Container responsif dengan max-width
-
----
-
-## Issue 3 — Halaman Home
-
-Halaman utama website (`/`):
-
-- **Hero Section** — Banner besar dengan gambar/poster drama unggulan, judul, deskripsi singkat, tombol "Tonton Sekarang"
-- **Trending / Sedang Populer** — Horizontal scroll row berisi card drama/film (poster, judul, rating)
-- **Drama Terbaru** — Row card serupa
-- **Film Terbaru** — Row card serupa
-- **Genre Populer** — Grid atau row berisi badge/card genre (Action, Romance, Thriller, dll.)
-
-> Gunakan data dummy/mock untuk sementara. Buat file `lib/data/mock.ts` berisi array objek drama & film.
-
----
-
-## Issue 4 — Halaman Katalog (Browse)
-
-Dua halaman katalog terpisah:
-
-### `/drama` — Daftar semua drama
-### `/film` — Daftar semua film
-
-Keduanya memiliki layout serupa:
-- Grid card (poster, judul, tahun, rating, genre tags)
-- Filter sidebar atau top-bar: **Genre**, **Tahun**, **Rating** (cukup UI, logic filter dari data mock)
-- Sort: Terbaru, Rating Tertinggi, A-Z
-- Pagination atau infinite scroll (pilih salah satu)
-
----
-
-## Issue 5 — Halaman Detail Drama/Film
-
-Route: `/drama/[slug]` dan `/film/[slug]`
-
-Isi halaman:
-- **Backdrop/banner** besar (gambar landscape)
-- **Info utama**: poster, judul, sinopsis, genre, tahun rilis, durasi, rating, negara asal, sutradara, cast (nama + foto placeholder)
-- **Daftar Episode** (khusus drama) — List episode dengan thumbnail, judul episode, durasi. Klik episode → halaman watch
-- **Tombol "Tonton"** (untuk film, langsung ke halaman watch)
-- **Rekomendasi** — Row card drama/film serupa di bagian bawah
-
----
-
-## Issue 6 — Halaman Watch (Player)
-
-Route: `/watch/[slug]` (atau `/watch/[slug]/[episode]` untuk drama)
-
-- **Video Player** — Gunakan komponen player HTML5 atau library seperti `react-player` / `vidstack`. Untuk saat ini cukup embed placeholder video (bisa pakai sample video URL atau dummy)
-- Judul episode / film yang sedang ditonton
-- **Navigasi episode** (khusus drama): tombol prev/next episode, dropdown pilih episode
-- **Info singkat** di bawah player: sinopsis episode, rating
-- Light/minimal UI agar fokus ke player
-
----
-
-## Issue 7 — Halaman Genre
-
-Route: `/genre` — Grid semua genre yang tersedia
-Route: `/genre/[slug]` — List drama/film yang termasuk genre tersebut (layout sama seperti halaman katalog)
-
----
-
-## Issue 8 — Search
-
-- Halaman `/search?q=...`
-- Tampilkan hasil pencarian berupa grid card
-- Pencarian dari data mock berdasarkan judul
-
----
-
-## Issue 9 — UI Polish & Responsiveness
-
-- Pastikan semua halaman responsif (mobile, tablet, desktop)
-- Tambahkan loading skeleton/shimmer pada card dan halaman detail
-- Hover effects pada card (scale, shadow, overlay info)
-- Smooth scroll dan transisi antar halaman
-- Scroll-to-top button
-- Pastikan dark theme konsisten di semua halaman
-
----
-
-## Issue 10 — SEO & Performance
-
-- Metadata per halaman (title, description, og:image) menggunakan Next.js `generateMetadata`
-- Sitemap (`sitemap.ts`)
-- Konfigurasi `robots.txt`
-- Optimasi gambar menggunakan `next/image`
-- Pastikan favicon dan web manifest terkonfigurasi dengan benar dari asset di `public/favicon/`
-
----
-
-## Struktur Data Mock (Referensi)
-
-Berikut contoh struktur data yang digunakan untuk mock. Simpan di `lib/data/mock.ts`:
-
-```ts
-type Content = {
-  id: string;
-  slug: string;
-  title: string;
-  type: "drama" | "film";
-  poster: string;       // path gambar poster
-  backdrop: string;     // path gambar landscape
-  synopsis: string;
-  genre: string[];
-  year: number;
-  rating: number;       // 1-10
-  country: string;
-  director: string;
-  cast: { name: string; photo: string }[];
-  duration: string;     // "45 min/ep" atau "2h 15m"
-  totalEpisodes?: number;
-  episodes?: Episode[];
-};
-
-type Episode = {
-  number: number;
-  title: string;
-  thumbnail: string;
-  duration: string;
-  synopsis: string;
-  videoUrl: string;     // placeholder URL
-};
-```
-
----
-
-## Tech Stack
-
-| Kategori | Pilihan |
-|---|---|
-| Framework | Next.js 15+ (App Router) |
-| Bahasa | TypeScript |
-| Styling | Tailwind CSS |
-| Video Player | Custom HTML5 Video Player |
-| Icons | `lucide-react` |
-| State / Data | Mock data lokal (`lib/data/mock.ts`) |
-
----
-
-## Struktur Folder (Target)
+### Struktur Route Baru
 
 ```
-├── app/
-│   ├── layout.tsx            # Root layout + metadata + font
-│   ├── page.tsx              # Home
-│   ├── drama/
-│   │   ├── page.tsx          # Katalog drama
-│   │   └── [slug]/page.tsx   # Detail drama
-│   ├── film/
-│   │   ├── page.tsx          # Katalog film
-│   │   └── [slug]/page.tsx   # Detail film
-│   ├── watch/
-│   │   └── [slug]/page.tsx   # Player page
-│   ├── genre/
-│   │   ├── page.tsx          # Semua genre
-│   │   └── [slug]/page.tsx   # Drama/film per genre
-│   └── search/
-│       └── page.tsx          # Hasil pencarian
-├── components/
-│   ├── layout/
-│   │   ├── Navbar.tsx
-│   │   └── Footer.tsx
-│   ├── ui/
-│   │   ├── ContentCard.tsx   # Card poster drama/film
-│   │   ├── HeroSection.tsx
-│   │   ├── ContentRow.tsx    # Horizontal scroll row
-│   │   ├── GenreBadge.tsx
-│   │   ├── EpisodeList.tsx
-│   │   ├── VideoPlayer.tsx
-│   │   ├── SearchBar.tsx
-│   │   ├── FilterBar.tsx
-│   │   └── Skeleton.tsx
-├── lib/
-│   ├── data/
-│   │   └── mock.ts           # Data dummy
-│   └── utils.ts              # Utility functions
-├── public/
-│   ├── favicon.ico
-│   ├── favicon/              # (sudah ada)
-│   ├── logo/                 # (sudah ada - logo.svg, logo.png, mangeakkk.png)
-│   └── images/               # Poster & backdrop placeholder
-└── tailwind.config.ts
+app/
+├── page.tsx                        # Home / Beranda
+├── [slug]/
+│   ├── page.tsx                    # Detail konten (drama detail + tombol episode / film langsung player)
+│   └── [episode]/
+│       └── page.tsx                # Halaman nonton episode drama (player + navigasi episode)
+├── drama/
+│   └── page.tsx                    # Katalog daftar semua drama (listing page)
+├── film/
+│   └── page.tsx                    # Katalog daftar semua film (listing page)
+├── search/
+│   └── page.tsx                    # Hasil pencarian
+├── layout.tsx
+├── sitemap.ts
+└── robots.ts
 ```
+
+### Catatan Implementasi
+- Halaman `[slug]/page.tsx`: Deteksi tipe konten dari mock data — jika **film**, tampilkan detail + player langsung di halaman ini. Jika **drama**, tampilkan detail + daftar episode.
+- Halaman `[slug]/[episode]/page.tsx`: Khusus drama, menampilkan video player + navigasi episode (prev/next). Slug episode gunakan format `episode-1`, `episode-2`, dst.
+- Hapus folder `app/watch/`, `app/genre/`, `app/drama/[slug]/`, dan `app/film/[slug]/`.
+- Update semua internal link di Navbar, Footer, ContentCard, EpisodeList, HeroSection, dan komponen lainnya agar menggunakan route baru.
+- Update `sitemap.ts` sesuai struktur route baru.
+
+---
+
+## Issue 2 — Hapus Genre, Ganti dengan Tipe Konten
+
+### Perubahan
+- **Hapus seluruh fitur Genre** — hapus route `/genre`, `/genre/[slug]`, komponen `GenreBadge.tsx`, dan filter genre di `FilterBar.tsx`.
+- **Ganti dengan Tipe konten** — hanya ada 2 tipe: **TV Series** dan **Film**.
+- Field `genre: string[]` di mock data **diganti** menjadi `type: "tv-series" | "film"`.
+- Di halaman katalog (`/drama` dan `/film`), filter genre dihapus. Cukup filter berdasarkan **Tahun** dan **Sort** saja.
+- Di Navbar, ganti menu **Genre** menjadi menu lain yang relevan (cukup Home, Drama, Film).
+
+---
+
+## Issue 3 — Sistem Badge (Ganti Rating)
+
+### Perubahan
+Hapus tampilan **rating bintang/angka** dari semua komponen (ContentCard, HeroSection, ContentDetailView, WatchView, dll). Ganti dengan **sistem badge visual** berikut:
+
+| Badge | Warna / Style | Ditampilkan Pada | Kondisi |
+|---|---|---|---|
+| 🔥 **HOT** | Merah / oranye, bold | ContentCard, daftar konten | Drama yang sedang trending (`isTrending: true`) |
+| 🆕 **NEW** | Hijau / biru cerah | ContentCard, daftar konten | Drama yang punya episode baru (`hasNewEpisode: true` di mock data) |
+| ⭐ **Pilihan** | Emas / kuning | ContentCard, daftar konten | Film yang menjadi pilihan editor (`isPilihan: true` di mock data) |
+| 🎬 **Drama Unggulan** | Gradient merah-pink, lebih besar | Hanya di Hero Banner | Konten yang ditampilkan di hero section (`isFeatured: true`) |
+
+---
+
+## Issue 4 — Tambahkan Ads Placement di Seluruh Halaman
+
+Tambahkan komponen `AdBanner` dan `AdSlot` yang reusable, lalu tempatkan di semua halaman dengan strategi berikut:
+
+### Komponen Ads
+Buat 2 komponen di `components/ads/`:
+- **`AdBanner.tsx`** — Banner horizontal full-width (biasa untuk leaderboard 728x90 atau responsive).
+- **`AdSlot.tsx`** — Box iklan berukuran lebih kecil (sidebar/inline, misalnya 300x250).
+
+### Penempatan Ads Per Halaman
+
+#### Halaman Home (`/`)
+- 1x `AdBanner` di **bawah Hero Section**
+- 1x `AdBanner` di **antara setiap content row**
+- 1x `AdBanner` di **sebelum Footer**
+
+#### Halaman Katalog (`/drama`, `/film`)
+- 1x `AdBanner` di **atas grid konten** (bawah filter bar)
+- 1x `AdSlot` setiap **8 card** di dalam grid (inline/sisipan di antara card)
+- 1x `AdBanner` di **bawah grid**, sebelum Footer
+
+#### Halaman Detail Konten (`/[slug]`)
+- 1x `AdBanner` di **bawah info sinopsis**
+- 1x `AdSlot` di **sidebar**
+- 1x `AdBanner` di **bawah rekomendasi**
+
+#### Halaman Nonton Episode (`/[slug]/[episode]`)
+- 1x `AdBanner` di **atas video player**
+- 1x `AdBanner` di **bawah video player**
+- 1x `AdSlot` di **sidebar** (samping daftar episode)
+- 1x `AdBanner` di **bawah daftar episode**, sebelum Footer
+
+#### Halaman Search (`/search`)
+- 1x `AdBanner` di **atas hasil pencarian**
+- 1x `AdBanner` di **bawah hasil pencarian**
+
+#### Global (Layout)
+- 1x `AdBanner` kecil/sticky di **bawah Navbar**
+- 1x `AdBanner` di **atas Footer**
+
+---
+
+## Issue 5 — Update Mock Data & Cleanup
+
+- Update `lib/data/mock.ts`:
+  - Ganti `type: "drama"` → `type: "tv-series"`.
+  - Hapus field `rating` dari semua item.
+  - Tambah field `hasNewEpisode: boolean` dan `isPilihan: boolean`.
+  - Hapus field `genre` dari semua item.
+  - Update episode slug menjadi format `episode-1`, `episode-2`, dst.
+- Hapus file/komponen yang tidak terpakai: `GenreBadge.tsx`, folder `app/genre/`, folder `app/watch/`, folder `app/drama/[slug]/`, folder `app/film/[slug]/`.
+- Update `lib/utils.ts` — hapus `formatRating()`.
+- Update semua komponen agar tidak lagi mereferensikan genre atau rating.
+- Pastikan `sitemap.ts` dan `robots.ts` terupdate sesuai route baru.

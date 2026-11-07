@@ -2,7 +2,7 @@ import React from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ContentDetailView from "@/components/detail/ContentDetailView";
-import { getContentBySlug, getFilmList } from "@/lib/data/mock";
+import { getContentBySlug, getAllContents } from "@/lib/data/mock";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -14,12 +14,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!content) {
     return {
-      title: "Film Tidak Ditemukan — Mangeakkk",
+      title: "Konten Tidak Ditemukan — Mangeakkk",
     };
   }
 
+  const typeLabel = content.type === "tv-series" ? "Drama Sub Indo" : "Film Bioskop";
+
   return {
-    title: `${content.title} (${content.year}) — Nonton Film Sub Indo | Mangeakkk`,
+    title: `${content.title} (${content.year}) — Nonton ${typeLabel} | Mangeakkk`,
     description: content.synopsis,
     openGraph: {
       title: `${content.title} — Mangeakkk`,
@@ -30,17 +32,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export async function generateStaticParams() {
-  const films = getFilmList();
-  return films.map((f) => ({
-    slug: f.slug,
+  const allContents = getAllContents();
+  return allContents.map((c) => ({
+    slug: c.slug,
   }));
 }
 
-export default async function FilmDetailPage({ params }: PageProps) {
+export default async function ContentDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const content = getContentBySlug(slug);
 
-  if (!content || content.type !== "film") {
+  if (!content) {
     notFound();
   }
 

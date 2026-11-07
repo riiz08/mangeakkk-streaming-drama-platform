@@ -7,14 +7,14 @@ import { Episode } from "@/lib/data/mock";
 interface EpisodeListProps {
   slug: string;
   episodes: Episode[];
-  currentEpisode?: number;
-  onSelectEpisode?: (epNumber: number) => void;
+  currentEpisodeSlug?: string;
+  onSelectEpisode?: (ep: Episode) => void;
 }
 
 export default function EpisodeList({
   slug,
   episodes,
-  currentEpisode,
+  currentEpisodeSlug,
   onSelectEpisode,
 }: EpisodeListProps) {
   if (!episodes || episodes.length === 0) {
@@ -28,8 +28,8 @@ export default function EpisodeList({
   return (
     <div className="space-y-3">
       {episodes.map((ep) => {
-        const isCurrent = currentEpisode === ep.number;
-        const watchUrl = `/watch/${slug}?ep=${ep.number}`;
+        const isCurrent = currentEpisodeSlug === ep.slug;
+        const watchUrl = `/${slug}/${ep.slug}`;
 
         const itemContent = (
           <div
@@ -81,14 +81,14 @@ export default function EpisodeList({
 
         if (onSelectEpisode) {
           return (
-            <div key={ep.number} onClick={() => onSelectEpisode(ep.number)}>
+            <div key={ep.slug} onClick={() => onSelectEpisode(ep)}>
               {itemContent}
             </div>
           );
         }
 
         return (
-          <Link key={ep.number} href={watchUrl}>
+          <Link key={ep.slug} href={watchUrl}>
             {itemContent}
           </Link>
         );
