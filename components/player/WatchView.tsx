@@ -10,6 +10,7 @@ import EpisodeList from "@/components/ui/EpisodeList";
 import BadgeLabel from "@/components/ui/BadgeLabel";
 import AdBanner from "@/components/ads/AdBanner";
 import AdSlot from "@/components/ads/AdSlot";
+import AdGridBlock from "@/components/ads/AdGridBlock";
 
 interface WatchViewProps {
   content: Content;
@@ -84,21 +85,9 @@ export default function WatchView({ content, currentEpisodeSlug }: WatchViewProp
         </div>
       </div>
 
-      {/* Ads: 8 iklan di Desktop (728x90) dan 4 di Mobile (320x50) di atas video player */}
-      <div className="space-y-1.5 sm:space-y-2 my-2 sm:my-3">
-        {/* Row 1-4: Tampil di Desktop (728x90) dan Mobile (320x50) */}
-        <AdBanner priority={true} slotName="Player Top Banner 1" className="!my-0.5" />
-        <AdBanner priority={true} slotName="Player Top Banner 2" className="!my-0.5" />
-        <AdBanner priority={true} slotName="Player Top Banner 3" className="!my-0.5" />
-        <AdBanner priority={true} slotName="Player Top Banner 4" className="!my-0.5" />
-
-        {/* Row 5-8: Khusus Desktop (728x90) sehingga total Desktop = 8, Mobile = 4 */}
-        <div className="hidden md:block space-y-1.5 sm:space-y-2">
-          <AdBanner priority={true} specificType="728x90" slotName="Player Top Banner 5 Desktop" className="!my-0.5" />
-          <AdBanner priority={true} specificType="728x90" slotName="Player Top Banner 6 Desktop" className="!my-0.5" />
-          <AdBanner priority={true} specificType="728x90" slotName="Player Top Banner 7 Desktop" className="!my-0.5" />
-          <AdBanner priority={true} specificType="728x90" slotName="Player Top Banner 8 Desktop" className="!my-0.5" />
-        </div>
+      {/* Ads: 8 iklan grid 2 kolom (desktop) / 1 kolom (mobile) di atas video player */}
+      <div className="my-2 sm:my-3">
+        <AdGridBlock />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-2">

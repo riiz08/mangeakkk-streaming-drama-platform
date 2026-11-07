@@ -10,6 +10,7 @@ import ContentCard from "@/components/ui/ContentCard";
 import VideoPlayer from "@/components/ui/VideoPlayer";
 import AdBanner from "@/components/ads/AdBanner";
 import AdSlot from "@/components/ads/AdSlot";
+import AdGridBlock from "@/components/ads/AdGridBlock";
 
 interface ContentDetailViewProps {
   content: Content;
@@ -28,12 +29,9 @@ export default function ContentDetailView({ content }: ContentDetailViewProps) {
 
   return (
     <div className="pb-16">
-      {/* Top Stacked Banners (2 di Desktop, 1 di Mobile) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-1 space-y-2">
-        <AdBanner priority={true} slotName="Detail Top Banner 1" className="!my-1" />
-        <div className="hidden md:block">
-          <AdBanner priority={true} specificType="728x90" slotName="Detail Top Banner 2 Desktop" className="!my-1" />
-        </div>
+      {/* Top Ad Grid Block (8 iklan, 2 kolom desktop / 1 kolom mobile) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-1">
+        <AdGridBlock />
       </div>
 
       {/* 1. Backdrop Banner */}
@@ -184,18 +182,9 @@ export default function ContentDetailView({ content }: ContentDetailViewProps) {
               Putar Film
             </h2>
 
-            {/* Ads: 8 iklan di Desktop (728x90) dan 4 di Mobile (320x50) di atas video player film */}
-            <div className="space-y-1.5 sm:space-y-2 mb-4">
-              <AdBanner priority={true} slotName="Film Player Top Banner 1" className="!my-0.5" />
-              <AdBanner priority={true} slotName="Film Player Top Banner 2" className="!my-0.5" />
-              <AdBanner priority={true} slotName="Film Player Top Banner 3" className="!my-0.5" />
-              <AdBanner priority={true} slotName="Film Player Top Banner 4" className="!my-0.5" />
-              <div className="hidden md:block space-y-1.5 sm:space-y-2">
-                <AdBanner priority={true} specificType="728x90" slotName="Film Player Top Banner 5 Desktop" className="!my-0.5" />
-                <AdBanner priority={true} specificType="728x90" slotName="Film Player Top Banner 6 Desktop" className="!my-0.5" />
-                <AdBanner priority={true} specificType="728x90" slotName="Film Player Top Banner 7 Desktop" className="!my-0.5" />
-                <AdBanner priority={true} specificType="728x90" slotName="Film Player Top Banner 8 Desktop" className="!my-0.5" />
-              </div>
+            {/* Ads: 8 iklan grid 2 kolom (desktop) / 1 kolom (mobile) di atas video player film */}
+            <div className="mb-4">
+              <AdGridBlock />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

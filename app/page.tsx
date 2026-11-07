@@ -5,6 +5,7 @@ import ContentRow from "@/components/ui/ContentRow";
 import AdBanner from "@/components/ads/AdBanner";
 import AdSlot from "@/components/ads/AdSlot";
 import AdNativeBanner from "@/components/ads/AdNativeBanner";
+import AdGridBlock from "@/components/ads/AdGridBlock";
 import {
   getFeaturedContent,
   getTrendingList,
@@ -21,21 +22,9 @@ export default function HomePage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* 1. Top Stacked Banners (8 di Desktop, 4 di Mobile) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 space-y-1.5 sm:space-y-2">
-        {/* Row 1-4: Tampil di Desktop (728x90) dan Mobile (320x50) */}
-        <AdBanner priority={true} slotName="Home Top Banner 1" className="!my-0.5" />
-        <AdBanner priority={true} slotName="Home Top Banner 2" className="!my-0.5" />
-        <AdBanner priority={true} slotName="Home Top Banner 3" className="!my-0.5" />
-        <AdBanner priority={true} slotName="Home Top Banner 4" className="!my-0.5" />
-
-        {/* Row 5-8: Khusus Desktop (728x90) sehingga total Desktop = 8, Mobile = 4 */}
-        <div className="hidden md:block space-y-1.5 sm:space-y-2">
-          <AdBanner priority={true} specificType="728x90" slotName="Home Top Banner 5 Desktop" className="!my-0.5" />
-          <AdBanner priority={true} specificType="728x90" slotName="Home Top Banner 6 Desktop" className="!my-0.5" />
-          <AdBanner priority={true} specificType="728x90" slotName="Home Top Banner 7 Desktop" className="!my-0.5" />
-          <AdBanner priority={true} specificType="728x90" slotName="Home Top Banner 8 Desktop" className="!my-0.5" />
-        </div>
+      {/* 1. Top Ad Grid Block (8 iklan, 2 kolom desktop / 1 kolom mobile) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2">
+        <AdGridBlock />
       </div>
 
       {/* 2. Hero Section */}
