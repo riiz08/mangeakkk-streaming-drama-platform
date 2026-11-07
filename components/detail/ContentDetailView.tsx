@@ -183,6 +183,21 @@ export default function ContentDetailView({ content }: ContentDetailViewProps) {
               <span className="w-1.5 h-6 bg-brand-600 rounded-full inline-block" />
               Putar Film
             </h2>
+
+            {/* Ads: 8 iklan di Desktop (728x90) dan 4 di Mobile (320x50) di atas video player film */}
+            <div className="space-y-1.5 sm:space-y-2 mb-4">
+              <AdBanner priority={true} slotName="Film Player Top Banner 1" className="!my-0.5" />
+              <AdBanner priority={true} slotName="Film Player Top Banner 2" className="!my-0.5" />
+              <AdBanner priority={true} slotName="Film Player Top Banner 3" className="!my-0.5" />
+              <AdBanner priority={true} slotName="Film Player Top Banner 4" className="!my-0.5" />
+              <div className="hidden md:block space-y-1.5 sm:space-y-2">
+                <AdBanner priority={true} specificType="728x90" slotName="Film Player Top Banner 5 Desktop" className="!my-0.5" />
+                <AdBanner priority={true} specificType="728x90" slotName="Film Player Top Banner 6 Desktop" className="!my-0.5" />
+                <AdBanner priority={true} specificType="728x90" slotName="Film Player Top Banner 7 Desktop" className="!my-0.5" />
+                <AdBanner priority={true} specificType="728x90" slotName="Film Player Top Banner 8 Desktop" className="!my-0.5" />
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
                 <VideoPlayer

@@ -143,13 +143,9 @@ export default function AdIframeBanner({
       style={{
         maxWidth: "100%",
         width: `${config.width}px`,
-        minHeight: `${config.height + 18}px`, // Fixed dimensions prevents CLS
+        minHeight: `${config.height}px`, // Fixed dimensions prevents CLS
       }}
     >
-      <span className="text-[9px] uppercase font-bold tracking-widest text-gray-500 mb-1 select-none">
-        Advertisement
-      </span>
-
       {shouldLoad ? (
         <iframe
           title={`ad-${type}`}
