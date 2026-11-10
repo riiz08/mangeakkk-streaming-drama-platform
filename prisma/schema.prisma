@@ -1,0 +1,74 @@
+// Prisma Schema for Mangeakkk Streaming Platform
+// Configured for PostgreSQL (Supabase)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Content {
+  id            String       @id @default(cuid())
+  slug          String       @unique
+  title         String
+  type          String       // "tv-series" | "film"
+  poster        String
+  backdrop      String
+  synopsis      String       @db.Text
+  year          Int
+  country       String       @default("Korea Selatan")
+  director      String       @default("Sutradara")
+  duration      String       // e.g. "60 min/ep" or "120 min"
+  totalEpisodes Int?
+  videoUrl      String?
+  isTrending    Boolean      @default(false)
+  hasNewEpisode Boolean      @default(false)
+  isPilihan     Boolean      @default(false)
+  isFeatured    Boolean      @default(false)
+  releaseDate   String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  episodes      Episode[]
+  cast          CastMember[]
+
+  @@index([type])
+  @@index([isFeatured])
+  @@index([isTrending])
+}
+
+model Episode {
+  id        String   @id @default(cuid())
+  contentId String
+  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  number    Int
+  slug      String
+  title     String
+  thumbnail String
+  duration  String   @default("60m")
+  synopsis  String   @db.Text
+  videoUrl  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([contentId, slug])
+  @@unique([contentId, number])
+  @@index([contentId])
+}
+
+model CastMember {
+  id        String   @id @default(cuid())
+  contentId String
+  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  name      String
+  photo     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contentId])
+}
+

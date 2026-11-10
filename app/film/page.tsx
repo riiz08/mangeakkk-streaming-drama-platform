@@ -1,15 +1,17 @@
 import React from "react";
 import { Metadata } from "next";
 import CatalogView from "@/components/catalog/CatalogView";
-import { getFilmList } from "@/lib/data/mock";
+import { getFilmList } from "@/lib/data/db";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Katalog Film Bioskop — Mangeakkk",
   description: "Nonton film bioskop blockbuster dan mahakarya sinema dengan subtitle Indonesia.",
 };
 
-export default function FilmPage() {
-  const films = getFilmList();
+export default async function FilmPage() {
+  const films = await getFilmList();
 
   return (
     <CatalogView

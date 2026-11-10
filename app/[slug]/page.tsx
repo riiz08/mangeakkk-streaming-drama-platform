@@ -2,15 +2,17 @@ import React from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ContentDetailView from "@/components/detail/ContentDetailView";
-import { getContentBySlug, getAllContents } from "@/lib/data/mock";
+import { getContentBySlug, getRelatedContents } from "@/lib/data/db";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const content = getContentBySlug(slug);
+  const content = await getContentBySlug(slug);
 
   if (!content) {
     return {
@@ -31,21 +33,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export async function generateStaticParams() {
-  const allContents = getAllContents();
-  return allContents.map((c) => ({
-    slug: c.slug,
-  }));
-}
-
 export default async function ContentDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const content = getContentBySlug(slug);
+  const content = await getContentBySlug(slug);
 
   if (!content) {
     notFound();
   }
 
-  return <ContentDetailView content={content} />;
-}
+  const related = await getRelatedContents(content);
 
+  return <ContentDetailView content={content} related={related} />;
+}

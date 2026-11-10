@@ -9,16 +9,18 @@ import AdGridBlock from "@/components/ads/AdGridBlock";
 import {
   getFeaturedContent,
   getTrendingList,
-  Content,
-} from "@/lib/data/mock";
+  getDramaList,
+  getFilmList,
+} from "@/lib/data/db";
 import { Tv, Film, Sparkles } from "lucide-react";
 
-export default function HomePage() {
-  const featured = getFeaturedContent();
-  const trending = getTrendingList();
-  // Saat ini belum ada data riil, jangan gunakan data dummy untuk drama & film
-  const dramas: Content[] = [];
-  const films: Content[] = [];
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const featured = await getFeaturedContent();
+  const trending = await getTrendingList();
+  const dramas = await getDramaList();
+  const films = await getFilmList();
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -28,7 +30,7 @@ export default function HomePage() {
       </div>
 
       {/* 2. Hero Section */}
-      <HeroSection content={featured} />
+      {featured && <HeroSection content={featured} />}
 
       {/* Main Content Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 pb-12">

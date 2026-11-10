@@ -2,15 +2,17 @@ import React from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import WatchView from "@/components/player/WatchView";
-import { getContentBySlug, getDramaList, getEpisodeBySlug } from "@/lib/data/mock";
+import { getContentBySlug, getEpisodeBySlug } from "@/lib/data/db";
 
 interface PageProps {
   params: Promise<{ slug: string; episode: string }>;
 }
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug, episode } = await params;
-  const content = getContentBySlug(slug);
+  const content = await getContentBySlug(slug);
 
   if (!content) {
     return {
@@ -32,27 +34,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export async function generateStaticParams() {
-  const dramas = getDramaList();
-  const params: { slug: string; episode: string }[] = [];
-
-  for (const drama of dramas) {
-    if (drama.episodes) {
-      for (const ep of drama.episodes) {
-        params.push({
-          slug: drama.slug,
-          episode: ep.slug,
-        });
-      }
-    }
-  }
-
-  return params;
-}
-
 export default async function DramaEpisodeWatchPage({ params }: PageProps) {
   const { slug, episode } = await params;
-  const content = getContentBySlug(slug);
+  const content = await getContentBySlug(slug);
 
   if (!content || content.type !== "tv-series") {
     notFound();
@@ -65,4 +49,3 @@ export default async function DramaEpisodeWatchPage({ params }: PageProps) {
 
   return <WatchView content={content} currentEpisodeSlug={episode} />;
 }
-
