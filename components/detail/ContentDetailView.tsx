@@ -14,12 +14,13 @@ import AdGridBlock from "@/components/ads/AdGridBlock";
 
 interface ContentDetailViewProps {
   content: Content;
+  related?: Content[];
 }
 
-export default function ContentDetailView({ content }: ContentDetailViewProps) {
+export default function ContentDetailView({ content, related: initialRelated }: ContentDetailViewProps) {
   if (!content) notFound();
 
-  const related = getRelatedContents(content);
+  const related = initialRelated || getRelatedContents(content);
   // Drama goes to /[slug]/episode-1, Film plays right here or links
   const firstEpisodeSlug = content.episodes?.[0]?.slug || "episode-1";
   const watchUrl =

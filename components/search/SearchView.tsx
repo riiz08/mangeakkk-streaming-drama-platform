@@ -1,24 +1,29 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Search, AlertCircle } from "lucide-react";
 import ContentCard from "@/components/ui/ContentCard";
 import AdBanner from "@/components/ads/AdBanner";
-import { searchContents } from "@/lib/data/mock";
+import { Content } from "@/lib/data/db";
 
-export default function SearchView() {
+interface SearchViewProps {
+  query?: string;
+  results?: Content[];
+}
+
+export default function SearchView({ query = "", results = [] }: SearchViewProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const initialQuery = searchParams.get("q") || "";
+  const [inputVal, setInputVal] = useState(query);
 
-  const [query, setQuery] = useState(initialQuery);
-  const results = searchContents(query);
+  useEffect(() => {
+    setInputVal(query);
+  }, [query]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+    if (inputVal.trim()) {
+      router.push(`/search?q=${encodeURIComponent(inputVal.trim())}`);
     }
   };
 
@@ -33,8 +38,8 @@ export default function SearchView() {
         <form onSubmit={handleSubmit} className="relative w-full">
           <input
             type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={inputVal}
+            onChange={(e) => setInputVal(e.target.value)}
             placeholder="Ketik judul drama, film, atau sutradara..."
             className="w-full bg-gray-900 text-white placeholder-gray-500 rounded-2xl pl-12 pr-28 py-3.5 border border-gray-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 text-sm sm:text-base shadow-xl"
             autoFocus
