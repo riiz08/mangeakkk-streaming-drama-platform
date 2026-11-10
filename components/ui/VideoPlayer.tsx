@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
+import type Hls from "hls.js";
 import {
   Play,
   Pause,
@@ -8,9 +9,9 @@ import {
   VolumeX,
   Maximize,
   Minimize,
-  RotateCcw,
   SkipBack,
   SkipForward,
+  Loader2,
 } from "lucide-react";
 
 interface VideoPlayerProps {
@@ -36,6 +37,7 @@ export default function VideoPlayer({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.9);
@@ -44,13 +46,70 @@ export default function VideoPlayer({
   const [showControls, setShowControls] = useState(true);
   const [controlsTimeout, setControlsTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  // Auto-play or reset when videoUrl changes
+  // Initialize Video source (HLS.js or native HTML5 video)
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-      setCurrentTime(0);
-      setIsPlaying(false);
+    const video = videoRef.current;
+    if (!video || !videoUrl) return;
+
+    video.currentTime = 0;
+    setCurrentTime(0);
+    setDuration(0);
+    setIsPlaying(false);
+    setIsBuffering(false);
+
+    let hlsInstance: Hls | null = null;
+    const isHls = videoUrl.includes(".m3u8");
+
+    if (isHls) {
+      // Dynamic import to prevent any SSR window issues
+      import("hls.js").then(({ default: HlsClass }) => {
+        if (!videoRef.current) return;
+
+        if (HlsClass.isSupported()) {
+          const hls = new HlsClass({
+            enableWorker: true,
+            lowLatencyMode: true,
+          });
+          hlsInstance = hls;
+
+          hls.loadSource(videoUrl);
+          hls.attachMedia(video);
+
+          hls.on(HlsClass.Events.ERROR, (_event, data) => {
+            if (data.fatal) {
+              switch (data.type) {
+                case HlsClass.ErrorTypes.NETWORK_ERROR:
+                  hls.startLoad();
+                  break;
+                case HlsClass.ErrorTypes.MEDIA_ERROR:
+                  hls.recoverMediaError();
+                  break;
+                default:
+                  hls.destroy();
+                  break;
+              }
+            }
+          });
+        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          // Native Safari / iOS support
+          video.src = videoUrl;
+        }
+      });
+    } else {
+      // Standard video format (e.g. .mp4, .webm)
+      video.src = videoUrl;
     }
+
+    return () => {
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+      if (video) {
+        video.removeAttribute("src");
+        video.load();
+      }
+    };
   }, [videoUrl]);
 
   const togglePlay = () => {
@@ -59,7 +118,7 @@ export default function VideoPlayer({
       videoRef.current.pause();
       setIsPlaying(false);
     } else {
-      videoRef.current.play();
+      videoRef.current.play().catch(() => {});
       setIsPlaying(true);
     }
   };
@@ -67,12 +126,15 @@ export default function VideoPlayer({
   const handleTimeUpdate = () => {
     if (videoRef.current) {
       setCurrentTime(videoRef.current.currentTime);
+      if (!duration && videoRef.current.duration) {
+        setDuration(videoRef.current.duration);
+      }
     }
   };
 
   const handleLoadedMetadata = () => {
     if (videoRef.current) {
-      setDuration(videoRef.current.duration);
+      setDuration(videoRef.current.duration || 0);
     }
   };
 
@@ -126,7 +188,7 @@ export default function VideoPlayer({
   };
 
   const formatTime = (time: number) => {
-    if (isNaN(time)) return "00:00";
+    if (isNaN(time) || !isFinite(time)) return "00:00";
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes < 10 ? "0" : ""}${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
@@ -136,25 +198,39 @@ export default function VideoPlayer({
     <div
       ref={containerRef}
       onMouseMove={handleMouseMove}
-      className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden group border border-gray-800 shadow-2xl"
+      className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden group border border-gray-800 shadow-2xl select-none"
     >
       <video
         ref={videoRef}
-        src={videoUrl}
         poster={poster}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
-        onEnded={() => setIsPlaying(false)}
+        onWaiting={() => setIsBuffering(true)}
+        onPlaying={() => {
+          setIsPlaying(true);
+          setIsBuffering(false);
+        }}
+        onEnded={() => {
+          setIsPlaying(false);
+          setIsBuffering(false);
+        }}
         onClick={togglePlay}
         className="w-full h-full object-contain cursor-pointer"
         playsInline
       />
 
+      {/* Buffering spinner */}
+      {isBuffering && isPlaying && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+          <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-brand-500 animate-spin" />
+        </div>
+      )}
+
       {/* Center play button overlay when paused */}
-      {!isPlaying && (
+      {!isPlaying && !isBuffering && (
         <div
           onClick={togglePlay}
-          className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer"
+          className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer z-10"
         >
           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-brand-600 text-white flex items-center justify-center shadow-xl shadow-brand-600/50 hover:scale-110 transition-transform">
             <Play className="w-8 h-8 sm:w-10 sm:h-10 fill-white ml-1" />
@@ -164,7 +240,7 @@ export default function VideoPlayer({
 
       {/* Control Overlay */}
       <div
-        className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-4 sm:p-6 transition-opacity duration-300 ${
+        className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-4 sm:p-6 transition-opacity duration-300 z-20 ${
           showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
@@ -257,4 +333,3 @@ export default function VideoPlayer({
     </div>
   );
 }
-

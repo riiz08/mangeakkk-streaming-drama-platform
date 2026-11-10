@@ -9,16 +9,16 @@ import AdGridBlock from "@/components/ads/AdGridBlock";
 import {
   getFeaturedContent,
   getTrendingList,
-  getDramaList,
-  getFilmList,
+  Content,
 } from "@/lib/data/mock";
 import { Tv, Film, Sparkles } from "lucide-react";
 
 export default function HomePage() {
   const featured = getFeaturedContent();
   const trending = getTrendingList();
-  const dramas = getDramaList();
-  const films = getFilmList();
+  // Saat ini belum ada data riil, jangan gunakan data dummy untuk drama & film
+  const dramas: Content[] = [];
+  const films: Content[] = [];
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -98,7 +98,7 @@ export default function HomePage() {
                     TV Series & Drama
                   </h3>
                   <p className="text-xs text-gray-400 mt-1">
-                    {dramas.length} Judul Serial dengan episode lengkap
+                    {dramas.length > 0 ? `${dramas.length} Judul Serial dengan episode lengkap` : "Belum Tersedia"}
                   </p>
                 </div>
               </div>
@@ -120,7 +120,7 @@ export default function HomePage() {
                     Film Bioskop
                   </h3>
                   <p className="text-xs text-gray-400 mt-1">
-                    {films.length} Judul Film berkualitas HD
+                    {films.length > 0 ? `${films.length} Judul Film berkualitas HD` : "Belum Tersedia"}
                   </p>
                 </div>
               </div>

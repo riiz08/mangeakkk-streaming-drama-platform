@@ -1,76 +1,45 @@
-# Perbaikan Iklan: 8 Ads Variasi 2 Kolom + Floating Banner
+# Migrasi Video Player ke HLS.js & Fallback "Belum Tersedia"
 
 ## Ringkasan
 
-Tiga perubahan pada sistem iklan:
-1. Bagian iklan di atas hero dan di atas video player diubah menjadi **8 unit dengan berbagai variasi ukuran**, ditampilkan dalam **flexbox 2 kolom di desktop dan 1 kolom di mobile**
-2. Floating Ad Banner dengan tombol close (sudah ada `FloatingAdBanner.tsx`, pastikan aktif dan tampil di semua halaman publik)
-3. Variasi tipe iklan yang digunakan bebas, tidak harus seragam 728x90
+Dua perubahan utama:
+1. **Ganti video player** — migrasi dari `<video src="">` biasa ke **HLS.js** agar mendukung streaming adaptif (.m3u8). Jika browser sudah native support HLS (Safari), gunakan native. Jika tidak, gunakan library `hls.js`.
+2. **Tambahkan fallback "Belum Tersedia"** — pada section **Sedang Trending**, **Drama & TV Series Terbaru**, dan **Film Pilihan** di halaman utama. Karena saat ini belum ada data real, hapus penggunaan data dummy/mock dan ganti dengan tampilan placeholder bertuliskan **"Belum Tersedia"**.
 
 ---
 
-## 1. Blok 8 Iklan di Atas Hero (Halaman Utama)
+## 1. Migrasi Video Player ke HLS.js
 
-Ganti blok banner yang ada di atas hero section dengan komponen baru **`AdGridBlock`** (8 slot iklan).
-
-**Layout:**
-- Gunakan `flex flex-wrap` dengan 2 kolom di desktop (`md:w-1/2`) dan 1 kolom di mobile (`w-full`)
-- Total 8 unit iklan dalam satu blok
-
-**Variasi iklan yang digunakan (8 slot, kombinasi bebas):**
-
-| Slot | Ukuran | Keterangan |
-|------|--------|------------|
-| 1 | 728x90 | Leaderboard — ditampilkan satu baris di desktop, full-width di mobile |
-| 2 | 728x90 | Leaderboard — col 2 di desktop |
-| 3 | 300x250 | Medium Rectangle — col 1 |
-| 4 | 300x250 | Medium Rectangle — col 2 |
-| 5 | 468x60 | Banner — col 1 |
-| 6 | 468x60 | Banner — col 2 |
-| 7 | 320x50 | Mobile Banner — col 1 |
-| 8 | 320x50 | Mobile Banner — col 2 |
-
-**Catatan:**
-- Di dalam tiap kolom, iklan di-`center` secara horizontal
-- Padding/gap antar slot iklan minimal agar tampak padat seperti referensi
+### Yang Perlu Dilakukan:
+- Install package `hls.js` sebagai dependency
+- Modifikasi komponen `components/ui/VideoPlayer.tsx`:
+  - Deteksi apakah `videoUrl` berupa URL HLS (berakhiran `.m3u8`) atau URL video biasa (`.mp4`, dll)
+  - Jika HLS: cek `Hls.isSupported()` → attach HLS.js ke elemen `<video>`. Jika browser native support (Safari), langsung set `src` pada `<video>`
+  - Jika bukan HLS: gunakan `<video src="">` seperti saat ini (backward-compatible)
+  - Cleanup: destroy instance HLS saat component unmount atau saat `videoUrl` berubah
+- Pertahankan seluruh UI kontrol player yang sudah ada (play/pause, seek, volume, fullscreen, prev/next episode) — **tidak ada perubahan tampilan**, hanya cara load sumber video yang berubah
+- VideoPlayer props `videoUrl` tetap bertipe `string`, bisa menerima `.m3u8` maupun `.mp4`
 
 ---
 
-## 2. Blok 8 Iklan di Atas Video Player (Halaman Streaming & Film)
+## 2. Fallback "Belum Tersedia" pada Section Konten
 
-Terapkan blok **`AdGridBlock`** yang sama (8 slot, 2 kolom desktop / 1 kolom mobile) tepat di atas video player di:
-- Halaman watch drama: `WatchView.tsx` — di atas elemen `VideoPlayer`
-- Halaman film: `ContentDetailView.tsx` — di atas elemen `VideoPlayer` di section "Putar Film"
-
-Gunakan iklan dengan variasi ukuran yang sama seperti di atas (kombinasi 728x90, 300x250, 468x60, 320x50).
-
----
-
-## 3. Buat Komponen `AdGridBlock`
-
-Buat komponen reusable `components/ads/AdGridBlock.tsx`:
-- Menerima array konfigurasi 8 slot iklan
-- Render dengan `flex flex-wrap` — tiap item `w-full md:w-1/2`
-- Tiap slot berisi satu unit `AdIframeBanner` dengan ukuran yang telah ditentukan
-- Semua slot dimuat dengan `priority={true}` agar langsung tampil tanpa lazy load
-- Tidak tampil di halaman `/admin`
-
----
-
-## 4. Floating Ad Banner dengan Tombol Close
-
-Komponen `FloatingAdBanner.tsx` sudah ada. Pastikan:
-- Aktif dan dimount di `app/layout.tsx` agar tampil di semua halaman publik
-- Memiliki tombol **X (Close)** yang terlihat jelas di pojok kanan atas
-- Setelah ditutup, state tersimpan di `sessionStorage` sehingga tidak muncul lagi dalam sesi yang sama
-- Tidak tampil di halaman `/admin`
-- Tambahkan variasi iklan di floating juga (468x60 desktop / 320x50 mobile)
+### Yang Perlu Dilakukan:
+- Modifikasi komponen `components/ui/ContentRow.tsx`:
+  - Tambahkan pengecekan: jika `items` kosong (array kosong atau length === 0), tampilkan placeholder **"Belum Tersedia"** sebagai gantinya — bukan kartu konten
+  - Placeholder berupa teks sederhana yang ter-center, dengan styling yang konsisten terhadap tema gelap (text abu-abu, mungkin ikon kecil)
+  - Sembunyikan tombol scroll kiri/kanan dan link "Lihat Semua" jika items kosong
+- Pada halaman utama `app/page.tsx`:
+  - Hapus import dan pemanggilan data mock (`getTrendingList`, `getDramaList`, `getFilmList`)
+  - Ganti dengan array kosong `[]` sehingga ContentRow otomatis menampilkan fallback "Belum Tersedia"
+  - Untuk `getFeaturedContent` di HeroSection, sesuaikan juga — jika tidak ada featured, tampilkan hero default/kosong atau sembunyikan
+- Pada halaman `/drama` dan `/film` (catalog pages), lakukan hal yang sama — jika data masih kosong, tampilkan "Belum Tersedia"
 
 ---
 
 ## Catatan Teknis
-- Gunakan key/script iklan yang sudah ada di `AdIframeBanner.tsx`, tidak perlu key baru
+- `hls.js` harus di-import secara dynamic (`import('hls.js')`) atau menggunakan `next/dynamic` karena hanya berjalan di client-side
 - Pastikan `bun run build` berhasil tanpa error
-- Halaman `/admin` tetap bersih tanpa iklan apapun
-- Jangan ubah komponen atau halaman lain di luar scope ini
+- Jangan ubah komponen ads, layout, atau halaman admin
+- Pertahankan semua tipe TypeScript yang sudah ada
 
