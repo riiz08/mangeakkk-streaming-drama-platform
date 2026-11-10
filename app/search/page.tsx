@@ -4,7 +4,7 @@ import SearchView from "@/components/search/SearchView";
 import { SkeletonRow } from "@/components/ui/Skeleton";
 import { searchContents } from "@/lib/data/db";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 1800; // Revalidate setiap 30 menit
 
 export const metadata: Metadata = {
   title: "Cari Drama & Film — Mangeakkk",

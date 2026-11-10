@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadToR2, isR2Configured, getMimeType } from "@/lib/r2";
+import { getSignedVideoUrl, getSignedPosterUrl } from "@/lib/signed-url";
 
 export const dynamic = "force-dynamic";
 
@@ -43,13 +44,17 @@ export async function POST(req: NextRequest) {
     let key = "";
     const cleanRelativePath = relativePath.replace(/\\/g, "/").replace(/^\//, "");
 
+    const cleanFolder = folder.replace(/[^a-zA-Z0-9_-]/g, "_");
+    let signedUrl = "";
+
     if (type === "poster") {
       const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
       key = `posters/${Date.now()}-${sanitizedName}`;
+      signedUrl = getSignedPosterUrl(cleanFolder || "posters");
     } else {
       // type === "video"
-      const cleanFolder = folder.replace(/[^a-zA-Z0-9_-]/g, "_");
       key = `videos/${cleanFolder}/${cleanRelativePath}`;
+      signedUrl = getSignedVideoUrl(cleanFolder);
     }
 
     const publicUrl = await uploadToR2({
@@ -62,7 +67,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      url: publicUrl,
+      url: signedUrl || publicUrl,
+      signedUrl,
+      publicUrl,
       key,
       filename: file.name,
       size: file.size,
