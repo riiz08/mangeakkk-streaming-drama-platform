@@ -1,18 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
   BarChart3,
   Film,
+  Tv,
   Plus,
   Trash2,
   Edit,
   Eye,
   TrendingUp,
-  Users,
-  Clock,
+  Sparkles,
+  Layers,
   ShieldCheck,
   Lock,
   LogOut,
@@ -22,9 +23,13 @@ import {
   Search,
   RotateCcw,
   Loader2,
+  CloudUpload,
+  HardDrive,
+  Info,
 } from "lucide-react";
-import { Content } from "@/lib/data/db";
+import { Content, AdminStats } from "@/lib/data/db";
 import BadgeLabel from "@/components/ui/BadgeLabel";
+import R2Uploader from "@/components/admin/R2Uploader";
 import {
   createContentAction,
   updateContentAction,
@@ -35,27 +40,12 @@ import {
 const AUTH_KEY = "mangeakkk_admin_auth_v1";
 const ADMIN_PASSWORD = "admin123";
 
-// Sample Traffic Data for Monitoring
-const WEEKLY_TRAFFIC = [
-  { week: "Minggu 1", views: 245000, growth: "+12%" },
-  { week: "Minggu 2", views: 278000, growth: "+13.5%" },
-  { week: "Minggu 3", views: 295000, growth: "+6.1%" },
-  { week: "Minggu 4", views: 314800, growth: "+8.2%" },
-];
-
-const POPULAR_PAGES = [
-  { rank: 1, title: "Queen of Tears", type: "tv-series", views: "14,820", share: "30.7%" },
-  { rank: 2, title: "Exhuma", type: "film", views: "11,450", share: "23.7%" },
-  { rank: 3, title: "Lovely Runner", type: "tv-series", views: "8,920", share: "18.5%" },
-  { rank: 4, title: "Parasite", type: "film", views: "6,200", share: "12.8%" },
-  { rank: 5, title: "Squid Game", type: "tv-series", views: "4,190", share: "8.7%" },
-];
-
 interface AdminDashboardProps {
   initialContents: Content[];
+  stats?: AdminStats;
 }
 
-export default function AdminDashboard({ initialContents }: AdminDashboardProps) {
+export default function AdminDashboard({ initialContents, stats }: AdminDashboardProps) {
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [inputPassword, setInputPassword] = useState("");
@@ -72,6 +62,9 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
   const [feedbackMsg, setFeedbackMsg] = useState("");
   const [feedbackError, setFeedbackError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // R2 Storage Configuration state
+  const [r2Configured, setR2Configured] = useState<boolean | null>(null);
 
   // Form State for Create / Edit
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -105,13 +98,19 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
     },
   ]);
 
-  // Load auth state from LocalStorage
-  React.useEffect(() => {
+  // Load auth state from LocalStorage & check R2 status
+  useEffect(() => {
     setIsClient(true);
     const authSaved = localStorage.getItem(AUTH_KEY);
     if (authSaved === "true") {
       setIsAuthenticated(true);
     }
+
+    // Check Cloudflare R2 upload status
+    fetch("/api/upload")
+      .then((res) => res.json())
+      .then((data) => setR2Configured(Boolean(data.configured)))
+      .catch(() => setR2Configured(false));
   }, []);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -157,7 +156,7 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
         slug: `episode-${nextNum}`,
         title: `Episode ${nextNum}`,
         duration: "60m",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        videoUrl: "",
       },
     ]);
   };
@@ -195,7 +194,7 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
         slug: "episode-1",
         title: "Episode 1",
         duration: "60m",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        videoUrl: "",
       },
     ]);
   };
@@ -234,7 +233,7 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
           slug: "episode-1",
           title: "Episode 1",
           duration: "60m",
-          videoUrl: item.videoUrl || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+          videoUrl: item.videoUrl || "",
         },
       ]);
     }
@@ -278,7 +277,6 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
       const res = await seedDefaultContentsAction();
       if (res.success) {
         setFeedbackMsg(res.message || "Data bawaan berhasil disinkronkan ke database.");
-        // Refresh page to load fresh contents from database
         window.location.reload();
       } else {
         setFeedbackError(res.error || "Gagal sinkronisasi data bawaan.");
@@ -366,6 +364,26 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
     return matchesSearch && matchesType;
   });
 
+  // Calculate live stats based on props or local contents
+  const currentTotalContents = stats?.totalContents ?? contents.length;
+  const currentTotalDramas =
+    stats?.totalDramas ?? contents.filter((c) => c.type === "tv-series").length;
+  const currentTotalFilms =
+    stats?.totalFilms ?? contents.filter((c) => c.type === "film").length;
+  const currentTotalEpisodes =
+    stats?.totalEpisodes ??
+    contents.reduce((sum, c) => sum + (c.episodes?.length || c.totalEpisodes || 0), 0);
+  const currentTotalTrending =
+    stats?.totalTrending ?? contents.filter((c) => c.isTrending).length;
+  const currentTotalFeatured =
+    stats?.totalFeatured ?? contents.filter((c) => c.isFeatured).length;
+  const currentTotalPilihan =
+    stats?.totalPilihan ?? contents.filter((c) => c.isPilihan).length;
+
+  const recentList = stats?.recentContents || contents.slice(0, 6);
+  const popularList =
+    stats?.popularContents || contents.filter((c) => c.isTrending || c.isPilihan).slice(0, 6);
+
   if (!isClient) {
     return null;
   }
@@ -381,7 +399,7 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
             </div>
             <h1 className="text-2xl font-black text-white tracking-tight">Admin Console</h1>
             <p className="text-xs text-zinc-400">
-              Masuk untuk mengelola database konten Prisma + Supabase
+              Masuk untuk mengelola database konten dan Cloudflare R2 Storage
             </p>
           </div>
 
@@ -443,9 +461,21 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
-              Prisma + Supabase Active
+              Prisma + Supabase Live
             </span>
-            <span className="text-xs text-zinc-500">Mangeakkk Server DB</span>
+
+            {/* Cloudflare R2 Status Pill */}
+            {r2Configured ? (
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 flex items-center gap-1">
+                <CloudUpload className="w-3 h-3 text-indigo-400" />
+                Cloudflare R2 Terhubung
+              </span>
+            ) : (
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                <Info className="w-3 h-3 text-amber-400" />
+                R2 Menunggu Kredensial
+              </span>
+            )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mt-1">
             Admin Management Console
@@ -497,7 +527,7 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
           }`}
         >
           <BarChart3 className="w-4 h-4" />
-          <span>Overview & Traffic</span>
+          <span>Statistik Realtime</span>
         </button>
 
         <button
@@ -528,136 +558,251 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
         </button>
       </div>
 
-      {/* TAB 1: OVERVIEW & TRAFFIC MONITORING */}
+      {/* TAB 1: OVERVIEW & REALTIME STATISTICS */}
       {activeTab === "overview" && (
         <div className="space-y-8 animate-in fade-in duration-200">
-          {/* Stat Cards */}
+          {/* Realtime Stat Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Total Konten */}
             <div className="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800 space-y-2">
               <div className="flex items-center justify-between text-zinc-400 text-xs font-semibold uppercase tracking-wider">
-                <span>Views Hari Ini</span>
-                <Eye className="w-4 h-4 text-brand-500" />
+                <span>Total Konten Terdaftar</span>
+                <Layers className="w-4 h-4 text-brand-500" />
               </div>
               <div className="flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-black text-white">48,290</span>
-                <span className="text-xs font-bold text-emerald-400">+14.8%</span>
+                <span className="text-2xl sm:text-3xl font-black text-white">
+                  {currentTotalContents}
+                </span>
+                <span className="text-xs font-bold text-brand-400">Judul</span>
               </div>
-              <p className="text-[11px] text-zinc-500">Dibandingkan kemarin (42,050)</p>
+              <p className="text-[11px] text-zinc-500">
+                {currentTotalDramas} Drama TV &bull; {currentTotalFilms} Film Bioskop
+              </p>
             </div>
 
+            {/* Total Episode */}
             <div className="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800 space-y-2">
               <div className="flex items-center justify-between text-zinc-400 text-xs font-semibold uppercase tracking-wider">
-                <span>Views 7 Hari Terakhir</span>
-                <TrendingUp className="w-4 h-4 text-emerald-400" />
+                <span>Total Episode Tersedia</span>
+                <Tv className="w-4 h-4 text-emerald-400" />
               </div>
               <div className="flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-black text-white">314,800</span>
-                <span className="text-xs font-bold text-emerald-400">+8.2%</span>
+                <span className="text-2xl sm:text-3xl font-black text-white">
+                  {currentTotalEpisodes}
+                </span>
+                <span className="text-xs font-bold text-emerald-400">Episode</span>
               </div>
-              <p className="text-[11px] text-zinc-500">Minggu lalu (295,000)</p>
+              <p className="text-[11px] text-zinc-500">Dari seluruh serial drama bersambung</p>
             </div>
 
+            {/* Konten Trending */}
             <div className="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800 space-y-2">
               <div className="flex items-center justify-between text-zinc-400 text-xs font-semibold uppercase tracking-wider">
-                <span>User Streaming Online</span>
-                <Users className="w-4 h-4 text-amber-400" />
+                <span>Konten Trending (HOT)</span>
+                <TrendingUp className="w-4 h-4 text-red-400" />
               </div>
               <div className="flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-black text-white">1,428</span>
-                <span className="text-xs font-bold text-amber-400">Live</span>
+                <span className="text-2xl sm:text-3xl font-black text-white">
+                  {currentTotalTrending}
+                </span>
+                <span className="text-xs font-bold text-red-400">Sedang Hangat</span>
               </div>
-              <p className="text-[11px] text-zinc-500">Sedang memutar video saat ini</p>
+              <p className="text-[11px] text-zinc-500">Ditampilkan di barisan Trending utama</p>
             </div>
 
+            {/* Konten Featured & Pilihan */}
             <div className="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800 space-y-2">
               <div className="flex items-center justify-between text-zinc-400 text-xs font-semibold uppercase tracking-wider">
-                <span>Rata-Rata Durasi</span>
-                <Clock className="w-4 h-4 text-indigo-400" />
+                <span>Featured & Pilihan</span>
+                <Sparkles className="w-4 h-4 text-amber-400" />
               </div>
               <div className="flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-black text-white">36m 40s</span>
-                <span className="text-xs font-bold text-emerald-400">+4.1%</span>
+                <span className="text-2xl sm:text-3xl font-black text-white">
+                  {currentTotalFeatured + currentTotalPilihan}
+                </span>
+                <span className="text-xs font-bold text-amber-400">Rekomendasi</span>
               </div>
-              <p className="text-[11px] text-zinc-500">Watch-time per sesi penonton</p>
+              <p className="text-[11px] text-zinc-500">
+                {currentTotalFeatured} Hero Banner &bull; {currentTotalPilihan} Pilihan
+              </p>
             </div>
           </div>
 
-          {/* Weekly Comparison */}
-          <div className="p-6 rounded-2xl bg-zinc-900/70 border border-zinc-800 space-y-4">
-            <div>
-              <h3 className="text-base font-bold text-white">Traffic Mingguan</h3>
-              <p className="text-xs text-zinc-400">Total views 4 minggu terakhir</p>
-            </div>
+          {/* Cloudflare R2 Storage Guide / Status Card */}
+          <div className="p-6 rounded-2xl bg-gradient-to-r from-zinc-900/90 via-zinc-900/60 to-zinc-900/90 border border-zinc-800 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
+                  <HardDrive className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <span>Cloudflare R2 Storage</span>
+                    {r2Configured ? (
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        Siap Digunakan
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                        Memerlukan Kredensial
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-xs text-zinc-400">
+                    Mendukung upload poster gambar dan upload folder video streaming HLS (.m3u8 +
+                    segment .ts).
+                  </p>
+                </div>
+              </div>
 
-            <div className="space-y-4 pt-2">
-              {WEEKLY_TRAFFIC.map((item, idx) => {
-                const maxViews = 350000;
-                const pct = Math.round((item.views / maxViews) * 100);
-                return (
-                  <div key={idx} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-zinc-300">{item.week}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-white">
-                          {(item.views / 1000).toFixed(0)}k
-                        </span>
-                        <span className="text-[10px] text-emerald-400 font-bold">
-                          {item.growth}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="w-full h-2.5 bg-zinc-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-brand-600 to-indigo-500 rounded-full"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+              {!r2Configured && (
+                <div className="text-xs text-amber-300/90 bg-amber-950/40 border border-amber-800/40 p-2.5 rounded-xl max-w-sm">
+                  <p className="font-semibold mb-1">Variabel .env yang dibutuhkan:</p>
+                  <code className="text-[10px] text-zinc-300 block">
+                    R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME,
+                    R2_PUBLIC_URL
+                  </code>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Top Halaman & Konten Terpopuler */}
-          <div className="p-6 rounded-2xl bg-zinc-900/70 border border-zinc-800 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-white">Tontonan & Halaman Terpopuler</h3>
-                <p className="text-xs text-zinc-400">Konten dengan kontribusi traffic tertinggi</p>
+          {/* Two-Column Realtime Content Tables */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Table 1: Konten Terbaru di Database */}
+            <div className="p-6 rounded-2xl bg-zinc-900/70 border border-zinc-800 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-white">Konten Terbaru di Database</h3>
+                  <p className="text-xs text-zinc-400">Judul-judul yang baru ditambahkan</p>
+                </div>
+                <span className="text-xs font-semibold text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-md border border-brand-500/20">
+                  Realtime
+                </span>
               </div>
-            </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-zinc-800 text-zinc-400 uppercase tracking-wider font-semibold">
-                    <th className="pb-3 px-2">Rank</th>
-                    <th className="pb-3 px-2">Judul Tontonan</th>
-                    <th className="pb-3 px-2">Tipe</th>
-                    <th className="pb-3 px-2 text-right">Views Hari Ini</th>
-                    <th className="pb-3 px-2 text-right">Share Traffic</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-800/60">
-                  {POPULAR_PAGES.map((page) => (
-                    <tr key={page.rank} className="hover:bg-zinc-800/30 transition-colors">
-                      <td className="py-3 px-2 font-bold text-zinc-300">#{page.rank}</td>
-                      <td className="py-3 px-2 font-semibold text-white">{page.title}</td>
-                      <td className="py-3 px-2">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-zinc-800 text-zinc-300">
-                          {page.type === "tv-series" ? "TV Series" : "Film"}
-                        </span>
-                      </td>
-                      <td className="py-3 px-2 text-right font-bold text-brand-400">
-                        {page.views}
-                      </td>
-                      <td className="py-3 px-2 text-right font-medium text-zinc-300">
-                        {page.share}
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-zinc-800 text-zinc-400 uppercase tracking-wider font-semibold">
+                      <th className="pb-3 px-2">Konten</th>
+                      <th className="pb-3 px-2">Tipe</th>
+                      <th className="pb-3 px-2 text-right">Tahun</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/60">
+                    {recentList.map((item) => (
+                      <tr key={item.id} className="hover:bg-zinc-800/30 transition-colors">
+                        <td className="py-3 px-2">
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-8 h-10 rounded overflow-hidden bg-zinc-800 shrink-0 border border-zinc-700">
+                              <Image
+                                src={item.poster}
+                                alt={item.title}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-white truncate max-w-[180px]">
+                                {item.title}
+                              </p>
+                              <p className="text-[10px] text-zinc-500">/{item.slug}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-2">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              item.type === "tv-series"
+                                ? "bg-brand-500/20 text-brand-400"
+                                : "bg-amber-500/20 text-amber-400"
+                            }`}
+                          >
+                            {item.type === "tv-series" ? "TV Series" : "Film"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-2 text-right text-zinc-300 font-medium">
+                          {item.year}
+                        </td>
+                      </tr>
+                    ))}
+                    {recentList.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="py-6 text-center text-zinc-500">
+                          Belum ada konten di database.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Table 2: Konten Paling Populer (HOT & Pilihan) */}
+            <div className="p-6 rounded-2xl bg-zinc-900/70 border border-zinc-800 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-white">Konten Populer & Pilihan</h3>
+                  <p className="text-xs text-zinc-400">Konten dengan label Trending atau Pilihan</p>
+                </div>
+                <span className="text-xs font-semibold text-red-400 bg-red-500/10 px-2.5 py-1 rounded-md border border-red-500/20">
+                  🔥 Populer
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-zinc-800 text-zinc-400 uppercase tracking-wider font-semibold">
+                      <th className="pb-3 px-2">Judul</th>
+                      <th className="pb-3 px-2">Badges</th>
+                      <th className="pb-3 px-2 text-right">Durasi / Ep</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/60">
+                    {popularList.map((item) => (
+                      <tr key={item.id} className="hover:bg-zinc-800/30 transition-colors">
+                        <td className="py-3 px-2">
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-8 h-10 rounded overflow-hidden bg-zinc-800 shrink-0 border border-zinc-700">
+                              <Image
+                                src={item.poster}
+                                alt={item.title}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-white truncate max-w-[180px]">
+                                {item.title}
+                              </p>
+                              <p className="text-[10px] text-zinc-500">{item.country}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-2">
+                          <div className="flex flex-wrap gap-1">
+                            {item.isTrending && <BadgeLabel type="hot" size="sm" />}
+                            {item.isPilihan && <BadgeLabel type="pilihan" size="sm" />}
+                            {item.isFeatured && <BadgeLabel type="featured" size="sm" />}
+                          </div>
+                        </td>
+                        <td className="py-3 px-2 text-right text-zinc-300 font-medium">
+                          {item.duration}
+                        </td>
+                      </tr>
+                    ))}
+                    {popularList.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="py-6 text-center text-zinc-500">
+                          Belum ada konten bertanda trending.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -823,7 +968,7 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
         </div>
       )}
 
-      {/* TAB 3: FORM INPUT / EDIT KONTEN */}
+      {/* TAB 3: FORM INPUT / EDIT KONTEN WITH R2 UPLOAD */}
       {activeTab === "create" && (
         <form
           onSubmit={handleSaveContent}
@@ -832,10 +977,13 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
           <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
             <div>
               <h2 className="text-lg font-bold text-white">
-                {editingId ? "Edit Konten Streaming (Database)" : "Tambah Konten Drama / Film Baru (Database)"}
+                {editingId
+                  ? "Edit Konten Streaming (Database)"
+                  : "Tambah Konten Drama / Film Baru (Database)"}
               </h2>
               <p className="text-xs text-zinc-400">
-                Lengkapi formulir di bawah ini untuk menyimpan data ke Prisma + Supabase.
+                Lengkapi formulir di bawah ini. Anda dapat memasukkan URL langsung atau mengunggah
+                poster dan folder video HLS (.m3u8) ke Cloudflare R2 Storage.
               </p>
             </div>
             {editingId && (
@@ -918,31 +1066,45 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
               </div>
             </div>
 
-            {/* Poster URL */}
+            {/* Poster URL with R2 Uploader */}
             <div>
               <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
-                Poster Image URL
+                Poster Image URL (Portrait)
               </label>
               <input
                 type="url"
                 value={formPoster}
                 onChange={(e) => setFormPoster(e.target.value)}
-                placeholder="https://images.unsplash.com/... (poster portrait)"
+                placeholder="https://... (URL poster gambar)"
                 className="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-xs focus:border-brand-500 focus:outline-none"
+              />
+              <R2Uploader
+                mode="image"
+                label="Upload Poster ke R2 Storage"
+                folderPrefix="posters"
+                currentUrl={formPoster}
+                onUploadComplete={(url) => setFormPoster(url)}
               />
             </div>
 
-            {/* Backdrop URL */}
+            {/* Backdrop URL with R2 Uploader */}
             <div>
               <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
-                Backdrop Banner URL (Landscape)
+                Backdrop Banner URL (Landscape 16:9)
               </label>
               <input
                 type="url"
                 value={formBackdrop}
                 onChange={(e) => setFormBackdrop(e.target.value)}
-                placeholder="https://images.unsplash.com/... (backdrop 16:9)"
+                placeholder="https://... (URL banner backdrop)"
                 className="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-xs focus:border-brand-500 focus:outline-none"
+              />
+              <R2Uploader
+                mode="image"
+                label="Upload Backdrop ke R2 Storage"
+                folderPrefix="backdrops"
+                currentUrl={formBackdrop}
+                onUploadComplete={(url) => setFormBackdrop(url)}
               />
             </div>
           </div>
@@ -960,7 +1122,9 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
                   onChange={(e) => setFormIsFeatured(e.target.checked)}
                   className="rounded text-brand-600 focus:ring-0"
                 />
-                <span className="text-xs text-amber-300 font-bold">Drama Unggulan (Hero Banner)</span>
+                <span className="text-xs text-amber-300 font-bold">
+                  Drama Unggulan (Hero Banner)
+                </span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-800 hover:border-zinc-700">
@@ -1009,30 +1173,42 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
             />
           </div>
 
-          {/* KHUSUS FILM: Video Stream URL */}
+          {/* KHUSUS FILM: Video Stream URL with R2 Folder Upload */}
           {formType === "film" && (
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
-                Video URL Film (.mp4 atau .m3u8 HLS)
+            <div className="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800 space-y-2">
+              <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider">
+                Video Stream URL (.mp4 atau .m3u8 HLS)
               </label>
               <input
                 type="url"
                 value={formVideoUrl}
                 onChange={(e) => setFormVideoUrl(e.target.value)}
-                placeholder="https://.../video.mp4 atau https://.../playlist.m3u8"
-                className="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-xs focus:border-brand-500 focus:outline-none"
+                placeholder="https://.../playlist.m3u8 atau https://.../video.mp4"
+                className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-xs focus:border-brand-500 focus:outline-none"
+              />
+              <p className="text-[11px] text-zinc-400">
+                Atau unggah folder HLS yang berisi file <code className="text-brand-400">.m3u8</code>{" "}
+                beserta segmen <code className="text-brand-400">.ts</code> langsung ke Cloudflare
+                R2:
+              </p>
+              <R2Uploader
+                mode="video-folder"
+                folderPrefix={formSlug ? `film_${formSlug}` : "film"}
+                currentUrl={formVideoUrl}
+                onUploadComplete={(url) => setFormVideoUrl(url)}
               />
             </div>
           )}
 
-          {/* KHUSUS DRAMA: Input Episode Dinamis */}
+          {/* KHUSUS DRAMA: Input Episode Dinamis with R2 Folder Upload */}
           {formType === "tv-series" && (
             <div className="space-y-4 pt-4 border-t border-zinc-800">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-bold text-white">Daftar Episode Drama</h3>
                   <p className="text-xs text-zinc-400">
-                    Kelola daftar episode dan URL video pemutar.
+                    Kelola daftar episode dan URL video. Anda dapat mengunggah folder HLS (.m3u8 +
+                    .ts) per-episode.
                   </p>
                 </div>
                 <button
@@ -1045,55 +1221,78 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
                 </button>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {formEpisodes.map((ep, idx) => (
                   <div
                     key={idx}
-                    className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center"
+                    className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 space-y-3"
                   >
-                    <div className="sm:col-span-1">
-                      <span className="text-xs font-bold text-zinc-400">#{idx + 1}</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                      <div className="sm:col-span-1">
+                        <span className="text-xs font-bold text-zinc-400">#{idx + 1}</span>
+                      </div>
+
+                      <div className="sm:col-span-4">
+                        <input
+                          type="text"
+                          value={ep.title}
+                          onChange={(e) => handleEpisodeChange(idx, "title", e.target.value)}
+                          placeholder="Judul Episode"
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-3">
+                        <input
+                          type="text"
+                          value={ep.slug}
+                          onChange={(e) => handleEpisodeChange(idx, "slug", e.target.value)}
+                          placeholder="Slug: episode-1"
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-3">
+                        <input
+                          type="text"
+                          value={ep.duration}
+                          onChange={(e) => handleEpisodeChange(idx, "duration", e.target.value)}
+                          placeholder="Durasi (misal 60m)"
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-1 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveEpisodeRow(idx)}
+                          disabled={formEpisodes.length <= 1}
+                          className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          title="Hapus baris episode"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="sm:col-span-3">
-                      <input
-                        type="text"
-                        value={ep.title}
-                        onChange={(e) => handleEpisodeChange(idx, "title", e.target.value)}
-                        placeholder="Judul Episode"
-                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <input
-                        type="text"
-                        value={ep.slug}
-                        onChange={(e) => handleEpisodeChange(idx, "slug", e.target.value)}
-                        placeholder="Slug: episode-1"
-                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-5">
+                    {/* Video URL & R2 Folder Upload per episode */}
+                    <div className="pt-2 border-t border-zinc-800/60">
+                      <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                        URL Video Episode (atau upload folder HLS ke R2)
+                      </label>
                       <input
                         type="text"
                         value={ep.videoUrl}
                         onChange={(e) => handleEpisodeChange(idx, "videoUrl", e.target.value)}
-                        placeholder="Video URL (.mp4 atau .m3u8)"
+                        placeholder="https://.../stream.m3u8"
                         className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white"
                       />
-                    </div>
-
-                    <div className="sm:col-span-1 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveEpisodeRow(idx)}
-                        disabled={formEpisodes.length <= 1}
-                        className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <R2Uploader
+                        mode="video-folder"
+                        folderPrefix={`${formSlug || "drama"}/${ep.slug || `episode-${idx + 1}`}`}
+                        currentUrl={ep.videoUrl}
+                        onUploadComplete={(url) => handleEpisodeChange(idx, "videoUrl", url)}
+                      />
                     </div>
                   </div>
                 ))}
@@ -1129,4 +1328,3 @@ export default function AdminDashboard({ initialContents }: AdminDashboardProps)
     </div>
   );
 }
-

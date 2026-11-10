@@ -337,3 +337,85 @@ export function getEpisodeBySlug(content: Content, episodeSlug: string): Episode
   return content.episodes.find((ep) => ep.slug === episodeSlug);
 }
 
+export interface AdminStats {
+  totalContents: number;
+  totalDramas: number;
+  totalFilms: number;
+  totalEpisodes: number;
+  totalTrending: number;
+  totalFeatured: number;
+  totalPilihan: number;
+  recentContents: Content[];
+  popularContents: Content[];
+}
+
+/**
+ * Fetch realtime statistics for the admin dashboard
+ */
+export async function getAdminStats(): Promise<AdminStats> {
+  try {
+    const [
+      totalContents,
+      totalDramas,
+      totalFilms,
+      totalEpisodes,
+      totalTrending,
+      totalFeatured,
+      totalPilihan,
+      recentItems,
+      popularItems,
+    ] = await Promise.all([
+      prisma.content.count(),
+      prisma.content.count({ where: { type: "tv-series" } }),
+      prisma.content.count({ where: { type: "film" } }),
+      prisma.episode.count(),
+      prisma.content.count({ where: { isTrending: true } }),
+      prisma.content.count({ where: { isFeatured: true } }),
+      prisma.content.count({ where: { isPilihan: true } }),
+      prisma.content.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 8,
+        include: { episodes: true, cast: true },
+      }),
+      prisma.content.findMany({
+        where: { OR: [{ isTrending: true }, { isPilihan: true }] },
+        orderBy: { updatedAt: "desc" },
+        take: 6,
+        include: { episodes: true, cast: true },
+      }),
+    ]);
+
+    return {
+      totalContents,
+      totalDramas,
+      totalFilms,
+      totalEpisodes,
+      totalTrending,
+      totalFeatured,
+      totalPilihan,
+      recentContents: recentItems.map(formatContent),
+      popularContents: popularItems.map(formatContent),
+    };
+  } catch (error) {
+    console.warn("[DB] getAdminStats failed, calculating fallback from mock:", error);
+    const mockDramas = MOCK_CONTENTS.filter((c) => c.type === "tv-series");
+    const mockFilms = MOCK_CONTENTS.filter((c) => c.type === "film");
+    const totalEpisodes = MOCK_CONTENTS.reduce(
+      (sum, c) => sum + (c.episodes?.length || c.totalEpisodes || 0),
+      0
+    );
+
+    return {
+      totalContents: MOCK_CONTENTS.length,
+      totalDramas: mockDramas.length,
+      totalFilms: mockFilms.length,
+      totalEpisodes,
+      totalTrending: MOCK_CONTENTS.filter((c) => c.isTrending).length,
+      totalFeatured: MOCK_CONTENTS.filter((c) => c.isFeatured).length,
+      totalPilihan: MOCK_CONTENTS.filter((c) => c.isPilihan).length,
+      recentContents: MOCK_CONTENTS.slice(0, 8),
+      popularContents: MOCK_CONTENTS.filter((c) => c.isTrending || c.isPilihan).slice(0, 6),
+    };
+  }
+}
+

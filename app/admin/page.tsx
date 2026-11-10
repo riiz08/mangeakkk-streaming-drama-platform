@@ -1,6 +1,6 @@
 import React from "react";
 import { Metadata } from "next";
-import { getAllContents } from "@/lib/data/db";
+import { getAllContents, getAdminStats } from "@/lib/data/db";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,10 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
-  const contents = await getAllContents();
+  const [contents, stats] = await Promise.all([
+    getAllContents(),
+    getAdminStats(),
+  ]);
 
-  return <AdminDashboard initialContents={contents} />;
+  return <AdminDashboard initialContents={contents} stats={stats} />;
 }
