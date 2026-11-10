@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { MOCK_CONTENTS } from "@/lib/data/mock";
+import { resolvePosterUrl, resolveVideoUrl } from "@/lib/signed-url";
 
 export interface CastMember {
   id?: string;
@@ -48,15 +49,15 @@ export function formatContent(item: any): Content {
     slug: item.slug,
     title: item.title,
     type: item.type as "tv-series" | "film",
-    poster: item.poster,
-    backdrop: item.backdrop,
+    poster: resolvePosterUrl(item.poster, item.slug),
+    backdrop: item.backdrop ? resolvePosterUrl(item.backdrop, item.slug) : item.backdrop,
     synopsis: item.synopsis,
     year: Number(item.year),
     country: item.country,
     director: item.director,
     duration: item.duration,
     totalEpisodes: item.totalEpisodes ?? (item.episodes ? item.episodes.length : undefined),
-    videoUrl: item.videoUrl || undefined,
+    videoUrl: item.videoUrl ? resolveVideoUrl(item.videoUrl, item.slug) : undefined,
     isTrending: Boolean(item.isTrending),
     hasNewEpisode: Boolean(item.hasNewEpisode),
     isPilihan: Boolean(item.isPilihan),
@@ -69,10 +70,10 @@ export function formatContent(item: any): Content {
           number: ep.number,
           slug: ep.slug,
           title: ep.title,
-          thumbnail: ep.thumbnail,
+          thumbnail: ep.thumbnail ? resolvePosterUrl(ep.thumbnail, `${item.slug}-ep-${ep.number}`) : ep.thumbnail,
           duration: ep.duration,
           synopsis: ep.synopsis,
-          videoUrl: ep.videoUrl,
+          videoUrl: resolveVideoUrl(ep.videoUrl, `${item.slug}-ep-${ep.number}`),
         }))
       : [],
   };

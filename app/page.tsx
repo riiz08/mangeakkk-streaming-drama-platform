@@ -14,7 +14,7 @@ import {
 } from "@/lib/data/db";
 import { Tv, Film, Sparkles } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // Revalidate setiap 1 jam untuk menekan bandwidth
 
 export default async function HomePage() {
   const featured = await getFeaturedContent();
