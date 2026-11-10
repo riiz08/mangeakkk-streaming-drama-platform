@@ -4,7 +4,7 @@ import crypto from "crypto";
  * Default fallback secret key for HMAC SHA256 signing
  * Shared between Next.js server and Cloudflare Worker
  */
-const DEFAULT_SECRET = "mangeakkk-secret-key-2026";
+const DEFAULT_SECRET = "riizadminmangeakkk";
 const DEFAULT_WORKER_BASE = "https://hls-worker.riskimhmmd0.workers.dev";
 
 /**
@@ -20,9 +20,10 @@ export function getWorkerBaseUrl(): string {
 
 /**
  * Get configured secret key for HMAC SHA256 signing
+ * Checks both VIDEO_SECRET and SECRET environment variables
  */
 export function getVideoSecret(): string {
-  return process.env.VIDEO_SECRET || DEFAULT_SECRET;
+  return process.env.VIDEO_SECRET || process.env.SECRET || DEFAULT_SECRET;
 }
 
 /**
@@ -133,22 +134,51 @@ export function getSignedVideoUrl(
 }
 
 /**
- * Generate signed poster image URL:
- * Format: {BASE}/{videoId}/{sig}/poster.jpg
+ * Generate signed URL for any arbitrary R2 file key:
+ * Format: {BASE}/{videoId}/{sig}/{r2Key}
  *
- * @param videoId Identifier or folder of the poster (e.g. "video-001")
- * @param filename File to serve (default "poster.jpg")
+ * For poster files:
+ * - Worker checks: `const r2Key = file.startsWith('posters/') ? file : videos/{videoId}/{file}`
+ * - So when `r2Key` starts with `posters/` (e.g. `posters/1234-name.jpg`), the Worker
+ *   directly fetches `posters/1234-name.jpg` from the R2 bucket.
+ *
+ * @param videoId Content identifier or folder used for the HMAC signature
+ * @param r2Key The exact R2 storage key path (e.g. "posters/1234-img.jpg" or "index.m3u8")
+ */
+export function getSignedUrlForKey(
+  videoId: string,
+  r2Key: string
+): string {
+  if (!r2Key) return "";
+  const cleanId = cleanVideoId(videoId) || "media";
+  const base = getWorkerBaseUrl();
+  const sig = signVideoId(cleanId);
+  const cleanKey = r2Key.replace(/^\/+/, "");
+  return `${base}/${cleanId}/${sig}/${cleanKey}`;
+}
+
+/**
+ * Generate signed poster image URL:
+ * Format: {BASE}/{videoId}/{sig}/{posterKey}
+ *
+ * @param videoId Identifier of the content
+ * @param posterKey Optional specific R2 poster key (e.g. "posters/1234-name.jpg").
+ *                  If not provided, defaults to "posters/{cleanId}.jpg".
  */
 export function getSignedPosterUrl(
   videoId: string,
-  filename = "poster.jpg"
+  posterKey?: string
 ): string {
-  if (!videoId) return "";
-  const cleanId = cleanVideoId(videoId);
-  const base = getWorkerBaseUrl();
-  const sig = signVideoId(cleanId);
-  const cleanFilename = filename.replace(/^\/+/, "");
-  return `${base}/${cleanId}/${sig}/${cleanFilename}`;
+  if (!videoId && !posterKey) return "";
+  const cleanId = cleanVideoId(videoId) || "media";
+
+  if (posterKey) {
+    const cleanKey = posterKey.replace(/^\/+/, "");
+    const fullKey = cleanKey.startsWith("posters/") ? cleanKey : `posters/${cleanKey}`;
+    return getSignedUrlForKey(cleanId, fullKey);
+  }
+
+  return getSignedUrlForKey(cleanId, `posters/${cleanId}.jpg`);
 }
 
 /**
@@ -184,9 +214,24 @@ export function resolvePosterUrl(
     return target;
   }
 
-  const videoId =
-    cleanVideoId(target) || (fallbackId ? cleanVideoId(fallbackId) : "poster");
-  return getSignedPosterUrl(videoId);
+  // Extract path if it was a full R2 URL
+  let r2Key = target;
+  if (target.startsWith("http://") || target.startsWith("https://")) {
+    try {
+      const parsed = new URL(target);
+      r2Key = parsed.pathname.replace(/^\/+/, "");
+    } catch {
+      // ignore
+    }
+  }
+
+  const videoId = fallbackId ? cleanVideoId(fallbackId) : "media";
+  if (r2Key.startsWith("posters/")) {
+    return getSignedUrlForKey(videoId, r2Key);
+  }
+
+  const cleanId = cleanVideoId(target) || videoId;
+  return getSignedPosterUrl(cleanId);
 }
 
 /**

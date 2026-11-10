@@ -74,6 +74,7 @@ export default function R2Uploader({
       formData.append("file", file);
       formData.append("type", "poster");
       formData.append("folder", folderPrefix || "posters");
+      formData.append("videoId", folderPrefix || "media");
 
       setStatus((prev) => ({ ...prev, percentage: 50 }));
 
@@ -82,7 +83,16 @@ export default function R2Uploader({
         body: formData,
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get("content-type") || "";
+      let data: any;
+      if (contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        throw new Error(
+          `Server mengembalikan response non-JSON (${res.status}): ${text.slice(0, 150)}`
+        );
+      }
 
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Gagal mengunggah gambar ke R2.");
@@ -141,9 +151,9 @@ export default function R2Uploader({
     let completed = 0;
     let finalManifestUrl = "";
 
-    // Upload files in concurrency chunks of 3 to optimize speed and reliability
-    const CONCURRENCY = 3;
-    const cleanFolder = folderPrefix || `hls_${Date.now()}`;
+    // Upload files in concurrency chunks of 2 to optimize stability and avoid memory spikes
+    const CONCURRENCY = 2;
+    const cleanFolder = (folderPrefix || `hls_${Date.now()}`).replace(/[^a-zA-Z0-9_-]/g, "_");
 
     try {
       for (let i = 0; i < files.length; i += CONCURRENCY) {
@@ -155,6 +165,7 @@ export default function R2Uploader({
             formData.append("file", file);
             formData.append("type", "video");
             formData.append("folder", cleanFolder);
+            formData.append("videoId", cleanFolder);
             // webkitRelativePath provides the file path inside folder
             const relativePath = file.webkitRelativePath
               ? file.webkitRelativePath.split("/").slice(1).join("/") || file.name
@@ -171,7 +182,17 @@ export default function R2Uploader({
               body: formData,
             });
 
-            const data = await res.json();
+            const contentType = res.headers.get("content-type") || "";
+            let data: any;
+            if (contentType.includes("application/json")) {
+              data = await res.json();
+            } else {
+              const text = await res.text();
+              throw new Error(
+                `Server mengembalikan response non-JSON saat upload ${file.name} (${res.status}): ${text.slice(0, 150)}`
+              );
+            }
+
             if (!res.ok || !data.success) {
               throw new Error(data.error || `Gagal mengunggah ${file.name}`);
             }
@@ -234,10 +255,12 @@ export default function R2Uploader({
     });
 
     try {
+      const cleanFolder = (folderPrefix || "single_videos").replace(/[^a-zA-Z0-9_-]/g, "_");
       const formData = new FormData();
       formData.append("file", file);
       formData.append("type", "video");
-      formData.append("folder", folderPrefix || "single_videos");
+      formData.append("folder", cleanFolder);
+      formData.append("videoId", cleanFolder);
       formData.append("relativePath", file.name);
 
       setStatus((prev) => ({ ...prev, percentage: 60 }));
@@ -247,7 +270,17 @@ export default function R2Uploader({
         body: formData,
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get("content-type") || "";
+      let data: any;
+      if (contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        throw new Error(
+          `Server mengembalikan response non-JSON (${res.status}): ${text.slice(0, 150)}`
+        );
+      }
+
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Gagal mengunggah video ke R2.");
       }

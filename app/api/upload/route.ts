@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadToR2, isR2Configured, getMimeType } from "@/lib/r2";
-import { getSignedVideoUrl, getSignedPosterUrl } from "@/lib/signed-url";
+import {
+  getSignedVideoUrl,
+  getSignedPosterUrl,
+  getSignedUrlForKey,
+} from "@/lib/signed-url";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+export const maxDuration = 120; // 2 minutes timeout for large video segment uploads
 
 export async function GET() {
   return NextResponse.json({
@@ -44,17 +50,26 @@ export async function POST(req: NextRequest) {
     let key = "";
     const cleanRelativePath = relativePath.replace(/\\/g, "/").replace(/^\//, "");
 
-    const cleanFolder = folder.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const videoId =
+      (formData.get("videoId") as string) ||
+      (formData.get("folder") as string) ||
+      "media";
+    const cleanFolder = folder.replace(/[^a-zA-Z0-9_-]/g, "_") || "general";
+    const cleanVideoId = videoId.replace(/[^a-zA-Z0-9_-]/g, "_") || "media";
     let signedUrl = "";
 
     if (type === "poster") {
       const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
       key = `posters/${Date.now()}-${sanitizedName}`;
-      signedUrl = getSignedPosterUrl(cleanFolder || "posters");
+      // In Worker: file.startsWith('posters/') ? file : videos/${videoId}/${file}
+      // Passing key as file segment ensures Worker finds `posters/...` directly in R2
+      signedUrl = getSignedUrlForKey(cleanVideoId, key);
     } else {
       // type === "video"
+      // Worker maps non-poster file to videos/${videoId}/${file}
+      // So key in R2 is videos/${cleanFolder}/${cleanRelativePath}
       key = `videos/${cleanFolder}/${cleanRelativePath}`;
-      signedUrl = getSignedVideoUrl(cleanFolder);
+      signedUrl = getSignedVideoUrl(cleanFolder, cleanRelativePath);
     }
 
     const publicUrl = await uploadToR2({
