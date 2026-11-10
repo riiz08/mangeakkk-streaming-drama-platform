@@ -1,148 +1,89 @@
-/**
- * Cloudflare Worker: HLS & Media Proxy with HMAC-SHA256 Signature Verification
- * 
- * URL Format:
- *   GET /{videoId}/{sig}/index.m3u8
- *   GET /{videoId}/{sig}/poster.jpg
- *   GET /{videoId}/{sig}/{any_hls_segment}.ts
- *
- * Environment / Bindings:
- *   - VIDEO_SECRET: Secret HMAC SHA256 (harus sama dengan Next.js)
- *   - R2_BUCKET: R2 Bucket Binding (nama binding bucket R2 di Cloudflare Worker)
- */
+const enc = new TextEncoder();
+const hexToBytes = (h) => new Uint8Array(h.match(/../g).map((b) => parseInt(b, 16)));
 
-export default {
-  async fetch(request, env) {
-    // Handle CORS Preflight
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
-          "Access-Control-Allow-Headers": "*",
-        },
-      });
-    }
-
-    if (request.method !== "GET" && request.method !== "HEAD") {
-      return new Response("Method Not Allowed", { status: 405 });
-    }
-
-    const url = new URL(request.url);
-    const pathname = url.pathname.replace(/^\/+/, "");
-    const parts = pathname.split("/");
-
-    // Minimal 3 bagian: [videoId, sig, file...]
-    if (parts.length < 3) {
-      return new Response(
-        JSON.stringify({ error: "Invalid URL format. Expected /{videoId}/{sig}/{file}" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    const [videoId, sig, ...fileParts] = parts;
-    const filePath = fileParts.join("/");
-
-    // Verifikasi HMAC-SHA256 signature
-    const secret = env.VIDEO_SECRET || "mangeakkk-secret-key-2026";
-    const isValid = await verifyHmacSha256(secret, videoId, sig);
-
-    if (!isValid) {
-      return new Response(
-        JSON.stringify({ error: "403 Forbidden: Invalid or unauthorized token signature." }),
-        {
-          status: 403,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        }
-      );
-    }
-
-    // Cari objek di Cloudflare R2
-    if (!env.R2_BUCKET) {
-      return new Response(
-        JSON.stringify({ error: "R2_BUCKET binding is not configured in this Worker." }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    // Coba berbagai kemungkinan prefix key di R2
-    const candidateKeys = [
-      `videos/${videoId}/${filePath}`,
-      `posters/${videoId}/${filePath}`,
-      `${videoId}/${filePath}`,
-      `videos/${filePath}`,
-      `posters/${filePath}`,
-      filePath,
-    ];
-
-    let object = null;
-    for (const key of candidateKeys) {
-      object = await env.R2_BUCKET.get(key);
-      if (object) break;
-    }
-
-    if (!object) {
-      return new Response("404 File Not Found in R2 Storage", {
-        status: 404,
-        headers: { "Access-Control-Allow-Origin": "*" },
-      });
-    }
-
-    // Bangun Response dengan headers optimal
-    const headers = new Headers();
-    object.writeHttpMetadata(headers);
-    headers.set("etag", object.httpEtag);
-    headers.set("Access-Control-Allow-Origin": "*");
-    headers.set("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
-
-    // Tipe MIME otomatis
-    const ext = filePath.split(".").pop()?.toLowerCase();
-    if (ext === "m3u8") {
-      headers.set("Content-Type", "application/vnd.apple.mpegurl");
-      headers.set("Cache-Control", "public, max-age=3600");
-    } else if (ext === "ts") {
-      headers.set("Content-Type", "video/mp2t");
-      headers.set("Cache-Control", "public, max-age=31536000, immutable");
-    } else if (ext === "jpg" || ext === "jpeg") {
-      headers.set("Content-Type", "image/jpeg");
-      headers.set("Cache-Control", "public, max-age=86400");
-    } else if (ext === "png") {
-      headers.set("Content-Type", "image/png");
-      headers.set("Cache-Control", "public, max-age=86400");
-    }
-
-    return new Response(object.body, {
-      status: 200,
-      headers,
-    });
-  },
+const TYPES = {
+	m3u8: 'application/vnd.apple.mpegurl',
+	ts: 'video/mp2t',
+	m4s: 'video/iso.segment',
+	mp4: 'video/mp4',
+	aac: 'audio/aac',
+	vtt: 'text/vtt',
+	jpg: 'image/jpeg',
+	jpeg: 'image/jpeg',
+	png: 'image/png',
+	webp: 'image/webp',
 };
 
-/**
- * Validasi HMAC-SHA256 menggunakan Web Crypto API
- */
-async function verifyHmacSha256(secret, data, receivedHexSig) {
-  try {
-    const enc = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      "raw",
-      enc.encode(secret),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"]
-    );
+const ALLOWED_ORIGINS = [
+	'https://tengokfull.web.id',
+	'https://www.tengokfull.web.id',
+];
+const isAllowed = (origin) =>
+	ALLOWED_ORIGINS.includes(origin) ||
+	/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin || '');
 
-    const signature = await crypto.subtle.sign("HMAC", key, enc.encode(data));
-    const expectedHex = Array.from(new Uint8Array(signature))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
+export default {
+	async fetch(request, env) {
+		const origin = request.headers.get('Origin');
+		const cors = isAllowed(origin)
+			? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' }
+			: {};
+		const reply = (body, status) => new Response(body, { status, headers: cors });
 
-    return expectedHex.toLowerCase() === receivedHexSig.toLowerCase();
-  } catch (err) {
-    return false;
-  }
-}
+		if (request.method === 'OPTIONS') {
+			return new Response(null, {
+				status: 204,
+				headers: { ...cors, 'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS', 'Access-Control-Max-Age': '86400' },
+			});
+		}
+		if (request.method !== 'GET' && request.method !== 'HEAD') {
+			return reply('Method Not Allowed', 405);
+		}
 
+		// URL: /{videoId}/{sig}/{file...}
+		const url = new URL(request.url);
+		const [videoId, sig, ...rest] = url.pathname.slice(1).split('/');
+
+		let file;
+		try {
+			file = decodeURIComponent(rest.join('/'));
+		} catch {
+			return reply('Bad Request', 400);
+		}
+
+		if (!videoId || !file || !/^[0-9a-f]{64}$/.test(sig || '') || file.includes('..')) {
+			return reply('Forbidden', 403);
+		}
+
+		const hmacKey = await crypto.subtle.importKey(
+			'raw', enc.encode(env.SECRET),
+			{ name: 'HMAC', hash: 'SHA-256' }, false, ['verify']
+		);
+		const ok = await crypto.subtle.verify(
+			'HMAC', hmacKey, hexToBytes(sig), enc.encode(videoId)
+		);
+		if (!ok) return reply('Forbidden', 403);
+
+		// Key R2 sesuai struktur upload:
+		//   HLS    -> videos/{folder}/{filename}
+		//   Poster -> posters/{timestamp}-{filename}
+		const r2Key = file.startsWith('posters/')
+			? file
+			: `videos/${videoId}/${file}`;
+
+		const obj = await env.BUCKET.get(r2Key);
+		if (!obj) return reply('Not found', 404);
+
+		const ext = (file.split('.').pop() || '').toLowerCase();
+		const contentType =
+			TYPES[ext] || obj.httpMetadata?.contentType || 'application/octet-stream';
+
+		return new Response(request.method === 'HEAD' ? null : obj.body, {
+			headers: {
+				...cors,
+				'Content-Type': contentType,
+				'Cache-Control': ext === 'm3u8' ? 'private, max-age=10' : 'private, max-age=3600',
+			},
+		});
+	},
+};
