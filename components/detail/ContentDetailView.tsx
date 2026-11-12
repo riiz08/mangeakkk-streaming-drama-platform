@@ -56,7 +56,7 @@ export default function ContentDetailView({ content, related: initialRelated }: 
             </div>
 
             <Link
-              href={watchUrl}
+              href="https://uplcm.com/4/12250281"
               className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-base transition-all shadow-xl shadow-brand-600/30 hover:scale-[1.02]"
             >
               <Play className="w-5 h-5 fill-white" />
