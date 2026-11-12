@@ -6,7 +6,6 @@ import crypto from "crypto";
  */
 const DEFAULT_SECRET = "riizadminmangeakkk";
 const DEFAULT_WORKER_BASE = "https://hls-worker.riskimhmmd0.workers.dev";
-const DEFAULT_VIDEO_ID = "videos";
 
 /**
  * Get configured Worker base URL without trailing slash
@@ -28,11 +27,11 @@ export function getVideoSecret(): string {
 }
 
 /**
- * Compute HMAC-SHA256 signature for a given videoId (default: "videos")
- * Worker verifies: HMAC-SHA256(SECRET, videoId) where videoId = "videos"
+ * Compute HMAC-SHA256 signature for a given videoId / content slug
+ * Worker verifies: HMAC-SHA256(SECRET, videoId) where videoId = content slug
  * URL structure: /{sig}/{videoId}/{file...}
  */
-export function signVideoId(videoId = DEFAULT_VIDEO_ID): string {
+export function signVideoId(videoId: string): string {
   if (!videoId) return "";
   const secret = getVideoSecret();
   return crypto.createHmac("sha256", secret).update(videoId).digest("hex");
@@ -80,11 +79,11 @@ export function cleanSlug(rawSlugOrPath: string): string {
     segments.shift(); // remove sig
   }
 
-  // If starts with "videos/"
+  // Remove legacy "videos/" or "posters/" if present
   if (segments[0] === "videos") {
-    segments.shift(); // remove "videos"
+    segments.shift();
   } else if (segments[0] === "posters") {
-    segments.shift(); // remove legacy "posters"
+    segments.shift();
   }
 
   return segments.join("/").replace(/\/+$/, "");
@@ -107,11 +106,12 @@ export function isWorkerOrR2Url(url: string): boolean {
 
 /**
  * Generate signed HLS video URL:
- * Format: {BASE}/{sig}/videos/{slug}/index.m3u8
+ * Format: {BASE}/{sig}/{slug}/index.m3u8
+ * Format Episode: {BASE}/{sig}/{drama-slug}/{episode-slug}/index.m3u8
  *
  * Contoh:
- * - film: {BASE}/{sig}/videos/film-badut-gendong/index.m3u8
- * - episode: {BASE}/{sig}/videos/queen-of-tears/episode-1/index.m3u8
+ * - film: {BASE}/{sig}/film-badut-gendong/index.m3u8
+ * - episode: {BASE}/{sig}/queen-of-tears/episode-1/index.m3u8
  */
 export function getSignedVideoUrl(
   slugOrPath: string,
@@ -119,25 +119,36 @@ export function getSignedVideoUrl(
 ): string {
   if (!slugOrPath) return "";
   const base = getWorkerBaseUrl();
-  const sig = signVideoId(DEFAULT_VIDEO_ID);
   const clean = cleanSlug(slugOrPath);
   const cleanFilename = filename.replace(/^\/+/, "");
 
-  // If slugOrPath already ends with .m3u8, use it directly
+  // Pisahkan contentSlug (videoId utama yang di-sign) dan sisa path file
+  const segments = clean.split("/");
+  const contentSlug = segments[0];
+  if (!contentSlug) return "";
+
+  const sig = signVideoId(contentSlug);
+  const remainingPath = segments.slice(1).join("/");
+
+  // Jika slugOrPath sudah berakhiran .m3u8 atau .mp4
   if (clean.endsWith(".m3u8") || clean.endsWith(".mp4")) {
-    return `${base}/${sig}/videos/${clean}`;
+    return `${base}/${sig}/${clean}`;
   }
 
-  return `${base}/${sig}/videos/${clean}/${cleanFilename}`;
+  if (remainingPath) {
+    return `${base}/${sig}/${contentSlug}/${remainingPath}/${cleanFilename}`;
+  }
+
+  return `${base}/${sig}/${contentSlug}/${cleanFilename}`;
 }
 
 /**
  * Generate signed poster/backdrop image URL:
- * Format: {BASE}/{sig}/videos/{slug}/poster.(jpg|jpeg|png|webp)
+ * Format: {BASE}/{sig}/{slug}/poster.(jpg|jpeg|png|webp)
  *
  * Contoh:
- * - {BASE}/{sig}/videos/film-badut-gendong/poster.jpg
- * - {BASE}/{sig}/videos/queen-of-tears/poster.jpg
+ * - {BASE}/{sig}/film-badut-gendong/poster.jpg
+ * - {BASE}/{sig}/queen-of-tears/poster.jpg
  */
 export function getSignedPosterUrl(
   slugOrPath: string,
@@ -145,34 +156,46 @@ export function getSignedPosterUrl(
 ): string {
   if (!slugOrPath) return "";
   const base = getWorkerBaseUrl();
-  const sig = signVideoId(DEFAULT_VIDEO_ID);
   const clean = cleanSlug(slugOrPath);
   const cleanFilename = filename.replace(/^\/+/, "");
 
-  // If clean already ends with an image extension, use it directly
+  const segments = clean.split("/");
+  const contentSlug = segments[0];
+  if (!contentSlug) return "";
+
+  const sig = signVideoId(contentSlug);
+
+  // Jika clean sudah berakhiran ekstensi gambar
   if (/\.(jpg|jpeg|png|webp|avif)$/i.test(clean)) {
-    return `${base}/${sig}/videos/${clean}`;
+    return `${base}/${sig}/${clean}`;
   }
 
-  return `${base}/${sig}/videos/${clean}/${cleanFilename}`;
+  const remainingPath = segments.slice(1).join("/");
+  if (remainingPath) {
+    return `${base}/${sig}/${contentSlug}/${remainingPath}/${cleanFilename}`;
+  }
+
+  return `${base}/${sig}/${contentSlug}/${cleanFilename}`;
 }
 
 /**
- * Generate signed URL for any arbitrary R2 file key under videos/
- * Format: {BASE}/{sig}/videos/{subpath}
+ * Generate signed URL for any arbitrary R2 file key
+ * Format: {BASE}/{sig}/{r2Key}
  */
 export function getSignedUrlForKey(storageKey: string): string {
   if (!storageKey) return "";
   const base = getWorkerBaseUrl();
-  const sig = signVideoId(DEFAULT_VIDEO_ID);
   let cleanKey = storageKey.replace(/^\/+/, "");
-
-  // If key starts with "videos/", keep it after sig: {base}/{sig}/videos/...
   if (cleanKey.startsWith("videos/")) {
-    return `${base}/${sig}/${cleanKey}`;
+    cleanKey = cleanKey.slice("videos/".length);
   }
 
-  return `${base}/${sig}/videos/${cleanKey}`;
+  const segments = cleanKey.split("/");
+  const contentSlug = segments[0];
+  if (!contentSlug) return "";
+
+  const sig = signVideoId(contentSlug);
+  return `${base}/${sig}/${cleanKey}`;
 }
 
 /**
@@ -191,12 +214,12 @@ export function resolvePosterUrl(
 
   const workerBase = getWorkerBaseUrl();
 
-  // If already a signed worker URL (contains worker base and valid /videos/ structure)
+  // If already a signed worker URL (contains worker base and valid /{sig}/{slug}/ structure)
   if (target.startsWith(workerBase)) {
     const afterBase = target.replace(workerBase, "").replace(/^\/+/, "");
     const parts = afterBase.split("/");
-    // Format: {sig}/videos/{slug}/... (at least 3 parts)
-    if (parts.length >= 3 && /^[0-9a-f]{64}$/i.test(parts[0])) {
+    // Format: {sig}/{slug}/... (parts[0] is 64 hex sig)
+    if (parts.length >= 2 && /^[0-9a-f]{64}$/i.test(parts[0])) {
       return target;
     }
   }
@@ -211,7 +234,6 @@ export function resolvePosterUrl(
 
   // Otherwise, generate signed poster URL using target or fallback
   const targetSlug = fallbackSlug || target;
-  // If target has a specific image filename (e.g. backdrop.jpg, poster.webp)
   const extMatch = target.match(/([^/]+\.(?:jpg|jpeg|png|webp|avif))$/i);
   const filename = extMatch ? extMatch[1] : "poster.jpg";
 
@@ -234,11 +256,11 @@ export function resolveVideoUrl(
 
   const workerBase = getWorkerBaseUrl();
 
-  // If already a signed worker URL (contains worker base and valid /videos/ structure)
+  // If already a signed worker URL (contains worker base and valid /{sig}/{slug}/ structure)
   if (target.startsWith(workerBase)) {
     const afterBase = target.replace(workerBase, "").replace(/^\/+/, "");
     const parts = afterBase.split("/");
-    if (parts.length >= 3 && /^[0-9a-f]{64}$/i.test(parts[0])) {
+    if (parts.length >= 2 && /^[0-9a-f]{64}$/i.test(parts[0])) {
       return target;
     }
   }

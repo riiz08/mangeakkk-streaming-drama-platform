@@ -65,8 +65,10 @@ export default {
 		if (!ok) return reply('Forbidden', 403);
 
 		// Ambil langsung ${videoId}/${file} dari bucket R2
-		// Contoh: videoId = "videos", file = "film-badut-gendong/poster.jpg"
-		// -> R2 key = "videos/film-badut-gendong/poster.jpg"
+		// Contoh:
+		// - /{sig}/film-badut-gendong/poster.jpg -> videoId="film-badut-gendong", file="poster.jpg" -> R2: "film-badut-gendong/poster.jpg"
+		// - /{sig}/film-badut-gendong/index.m3u8 -> videoId="film-badut-gendong", file="index.m3u8" -> R2: "film-badut-gendong/index.m3u8"
+		// - /{sig}/queen-of-tears/episode-1/index.m3u8 -> videoId="queen-of-tears", file="episode-1/index.m3u8" -> R2: "queen-of-tears/episode-1/index.m3u8"
 		const obj = await env.BUCKET.get(`${videoId}/${file}`);
 		if (!obj) return reply('Not found', 404);
 
