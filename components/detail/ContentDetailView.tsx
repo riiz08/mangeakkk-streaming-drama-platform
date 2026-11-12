@@ -8,9 +8,6 @@ import BadgeLabel from "@/components/ui/BadgeLabel";
 import EpisodeList from "@/components/ui/EpisodeList";
 import ContentCard from "@/components/ui/ContentCard";
 import VideoPlayer from "@/components/ui/VideoPlayer";
-import AdBanner from "@/components/ads/AdBanner";
-import AdSlot from "@/components/ads/AdSlot";
-import AdGridBlock from "@/components/ads/AdGridBlock";
 
 interface ContentDetailViewProps {
   content: Content;
@@ -30,11 +27,6 @@ export default function ContentDetailView({ content, related: initialRelated }: 
 
   return (
     <div className="pb-16">
-      {/* Top Ad Grid Block (8 iklan, 2 kolom desktop / 1 kolom mobile) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-1">
-        <AdGridBlock />
-      </div>
-
       {/* 1. Backdrop Banner */}
       <div className="relative w-full h-[360px] sm:h-[460px] lg:h-[520px] overflow-hidden">
         <Image
@@ -72,11 +64,6 @@ export default function ContentDetailView({ content, related: initialRelated }: 
                 {content.type === "tv-series" ? "Mulai Nonton (Ep 1)" : "Tonton Film Sekarang"}
               </span>
             </Link>
-
-            {/* Ads: 160x600 Skyscraper sponsor di bawah poster */}
-            <div className="hidden md:flex justify-center mt-6">
-              <AdSlot type="160x600" slotName="Detail Skyscraper Sponsor" />
-            </div>
           </div>
 
           {/* Right: Info Details */}
@@ -87,7 +74,6 @@ export default function ContentDetailView({ content, related: initialRelated }: 
                 <span className="px-2.5 py-0.5 text-xs font-bold uppercase rounded bg-brand-600/20 text-brand-500 border border-brand-500/30">
                   {content.type === "tv-series" ? "TV Series" : "Film Bioskop"}
                 </span>
-
                 {content.isTrending && <BadgeLabel type="hot" size="md" />}
                 {content.hasNewEpisode && <BadgeLabel type="new" size="md" />}
                 {content.isPilihan && <BadgeLabel type="pilihan" size="md" />}
@@ -172,9 +158,6 @@ export default function ContentDetailView({ content, related: initialRelated }: 
           </div>
         </div>
 
-        {/* Ads: 1x AdBanner (468x60 Desktop / 320x50 Mobile) di bawah info sinopsis */}
-        <AdBanner variant="compact" slotName="Detail Info Sponsor" className="mt-8 mb-4" />
-
         {/* 3. Khusus FILM: Embed Video Player Langsung di Halaman Ini */}
         {content.type === "film" && (
           <div id="player" className="mt-10 pt-8 border-t border-gray-800/80">
@@ -182,24 +165,12 @@ export default function ContentDetailView({ content, related: initialRelated }: 
               <span className="w-1.5 h-6 bg-brand-600 rounded-full inline-block" />
               Putar Film
             </h2>
-
-            {/* Ads: 8 iklan grid 2 kolom (desktop) / 1 kolom (mobile) di atas video player film */}
-            <div className="mb-4">
-              <AdGridBlock />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                <VideoPlayer
-                  videoUrl={content.videoUrl || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"}
-                  poster={content.backdrop}
-                  title={content.title}
-                />
-              </div>
-              <div>
-                {/* Ads: 1x AdSlot di sidebar */}
-                <AdSlot slotName="Film Sidebar Sponsor" />
-              </div>
+            <div className="max-w-4xl">
+              <VideoPlayer
+                videoUrl={content.videoUrl || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"}
+                poster={content.backdrop}
+                title={content.title}
+              />
             </div>
           </div>
         )}
@@ -217,15 +188,7 @@ export default function ContentDetailView({ content, related: initialRelated }: 
               </span>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                <EpisodeList slug={content.slug} episodes={content.episodes} />
-              </div>
-              <div>
-                {/* Ads: 1x AdSlot di sidebar */}
-                <AdSlot slotName="Episode Sidebar Sponsor" />
-              </div>
-            </div>
+            <EpisodeList slug={content.slug} episodes={content.episodes} />
           </div>
         )}
 
@@ -243,9 +206,6 @@ export default function ContentDetailView({ content, related: initialRelated }: 
             </div>
           </div>
         )}
-
-        {/* Ads: 1x AdBanner di bawah rekomendasi */}
-        <AdBanner slotName="Detail Bottom Sponsor" className="mt-8" />
       </div>
     </div>
   );

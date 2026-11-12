@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search, AlertCircle } from "lucide-react";
 import ContentCard from "@/components/ui/ContentCard";
-import AdBanner from "@/components/ads/AdBanner";
 import { Content } from "@/lib/data/db";
 
 interface SearchViewProps {
@@ -54,14 +53,6 @@ export default function SearchView({ query = "", results = [] }: SearchViewProps
         </form>
       </div>
 
-      {/* Top Stacked Banners (2 di Desktop, 1 di Mobile) */}
-      <div className="space-y-2 mb-6">
-        <AdBanner priority={true} slotName="Search Top Banner 1" className="!my-1" />
-        <div className="hidden md:block">
-          <AdBanner priority={true} specificType="728x90" slotName="Search Top Banner 2 Desktop" className="!my-1" />
-        </div>
-      </div>
-
       {/* Results Section */}
       <div>
         <div className="flex items-center justify-between text-xs sm:text-sm text-gray-400 mb-6">
@@ -76,32 +67,21 @@ export default function SearchView({ query = "", results = [] }: SearchViewProps
         </div>
 
         {results.length > 0 ? (
-          <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-              {results.slice(0, 5).map((item) => (
-                <ContentCard key={item.id} content={item} />
-              ))}
-            </div>
-
-            {results.length > 5 && (
-              <>
-                {/* Mid In-Feed Banner 468x60 (Desktop) / 320x50 (Mobile) */}
-                <AdBanner variant="compact" slotName="Search Mid In-Feed Banner" className="my-6" />
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-                  {results.slice(5).map((item) => (
-                    <ContentCard key={item.id} content={item} />
-                  ))}
-                </div>
-              </>
-            )}
-          </>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+            {results.map((item) => (
+              <ContentCard key={item.id} content={item} />
+            ))}
+          </div>
         ) : query ? (
           <div className="py-20 text-center bg-gray-900/30 rounded-2xl border border-gray-800 max-w-lg mx-auto p-6">
-            <AlertCircle className="w-10 h-10 text-gray-500 mx-auto mb-3" />
-            <h3 className="text-white font-semibold text-lg mb-1">Tidak Ditemukan</h3>
-            <p className="text-gray-400 text-xs sm:text-sm">
-              Maaf, tidak ada drama atau film yang cocok dengan kata kunci &quot;{query}&quot;. Cobalah kata kunci lain seperti &quot;Squid&quot;, &quot;Korea&quot;, atau &quot;Nolan&quot;.
+            <div className="w-12 h-12 rounded-full bg-gray-800/80 flex items-center justify-center mx-auto mb-3 text-gray-400">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-white mb-1">
+              Tidak Ada Hasil Ditemukan
+            </h3>
+            <p className="text-xs text-gray-400">
+              Kami tidak menemukan tayangan yang cocok dengan kata kunci &quot;{query}&quot;. Coba cari dengan judul lain atau periksa ejaan.
             </p>
           </div>
         ) : null}

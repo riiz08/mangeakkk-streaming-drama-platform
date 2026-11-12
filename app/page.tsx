@@ -2,10 +2,6 @@ import React from "react";
 import Link from "next/link";
 import HeroSection from "@/components/ui/HeroSection";
 import ContentRow from "@/components/ui/ContentRow";
-import AdBanner from "@/components/ads/AdBanner";
-import AdSlot from "@/components/ads/AdSlot";
-import AdNativeBanner from "@/components/ads/AdNativeBanner";
-import AdGridBlock from "@/components/ads/AdGridBlock";
 import {
   getFeaturedContent,
   getTrendingList,
@@ -24,17 +20,12 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* 1. Top Ad Grid Block (8 iklan, 2 kolom desktop / 1 kolom mobile) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2">
-        <AdGridBlock />
-      </div>
-
-      {/* 2. Hero Section */}
+      {/* Hero Section */}
       {featured && <HeroSection content={featured} />}
 
       {/* Main Content Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 pb-12">
-        {/* 3. Trending Section */}
+        {/* Trending Section */}
         <ContentRow
           title="Sedang Trending 🔥"
           subtitle="Tontonan paling ramai dibicarakan minggu ini"
@@ -42,10 +33,7 @@ export default async function HomePage() {
           viewAllHref="/drama"
         />
 
-        {/* Ads: Native Banner 4:1 #1 di antara row konten 1 dan 2 */}
-        <AdNativeBanner className="my-6" />
-
-        {/* 4. Drama Terbaru */}
+        {/* Drama Terbaru */}
         <ContentRow
           title="Drama & TV Series Terbaru"
           subtitle="Episode terbaru dari serial drama pilihan"
@@ -53,15 +41,7 @@ export default async function HomePage() {
           viewAllHref="/drama"
         />
 
-        {/* Ads: Banner 300x250 Inline #1 (Desktop Only) */}
-        <div className="hidden md:flex justify-center my-4">
-          <AdSlot type="300x250" slotName="Home Inline 300x250 #1" />
-        </div>
-
-        {/* Ads: Native Banner 4:1 #2 di antara row konten 2 dan 3 */}
-        <AdNativeBanner className="my-6" />
-
-        {/* 5. Film Terbaru */}
+        {/* Film Terbaru */}
         <ContentRow
           title="Film Pilihan ⭐"
           subtitle="Koleksi film bioskop blockbuster dan terpopuler"
@@ -69,12 +49,7 @@ export default async function HomePage() {
           viewAllHref="/film"
         />
 
-        {/* Ads: Banner 300x250 Inline #2 (Desktop Only) */}
-        <div className="hidden md:flex justify-center my-4">
-          <AdSlot type="300x250" slotName="Home Inline 300x250 #2" />
-        </div>
-
-        {/* 6. Tipe Tayangan Section */}
+        {/* Tipe Tayangan Section */}
         <section className="bg-gradient-to-r from-gray-900/90 via-gray-900/60 to-gray-900/90 border border-gray-800/80 rounded-2xl p-6 sm:p-8">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="w-5 h-5 text-brand-500" />
@@ -132,9 +107,6 @@ export default async function HomePage() {
             </Link>
           </div>
         </section>
-
-        {/* Ads: Banner 468x60 (Desktop) / 320x50 (Mobile) di antara section */}
-        <AdBanner slotName="Home In-Feed Mid Banner" variant="compact" className="my-6" />
       </div>
     </div>
   );
