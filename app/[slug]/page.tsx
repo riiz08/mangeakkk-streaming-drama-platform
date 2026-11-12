@@ -8,7 +8,7 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-export const revalidate = 86400; // Revalidate setiap 24 jam (metadata konten jarang berubah)
+export const revalidate = 2592000; // Revalidate setiap 30 hari (metadata konten jarang berubah, on-demand revalidation via server actions)
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;

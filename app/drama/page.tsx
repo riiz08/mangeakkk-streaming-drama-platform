@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import CatalogView from "@/components/catalog/CatalogView";
 import { getDramaList } from "@/lib/data/db";
 
-export const revalidate = 3600; // Revalidate setiap 1 jam
+export const revalidate = 86400; // Revalidate setiap 24 jam (1 hari), on-demand revalidation via server actions
 
 export const metadata: Metadata = {
   title: "Katalog Serial Drama Korea & TV Series — Mangeakkk",

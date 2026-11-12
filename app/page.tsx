@@ -14,7 +14,7 @@ import {
 } from "@/lib/data/db";
 import { Tv, Film, Sparkles } from "lucide-react";
 
-export const revalidate = 3600; // Revalidate setiap 1 jam untuk menekan bandwidth
+export const revalidate = 86400; // Revalidate setiap 24 jam (1 hari), on-demand revalidation via server actions
 
 export default async function HomePage() {
   const featured = await getFeaturedContent();

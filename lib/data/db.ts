@@ -65,16 +65,20 @@ export function formatContent(item: any): Content {
     releaseDate: item.releaseDate || undefined,
     cast: item.cast ? item.cast.map((c: any) => ({ id: c.id, name: c.name, photo: c.photo })) : [],
     episodes: item.episodes
-      ? item.episodes.map((ep: any) => ({
-          id: ep.id,
-          number: ep.number,
-          slug: ep.slug,
-          title: ep.title,
-          thumbnail: ep.thumbnail ? resolvePosterUrl(ep.thumbnail, `${item.slug}-ep-${ep.number}`) : ep.thumbnail,
-          duration: ep.duration,
-          synopsis: ep.synopsis,
-          videoUrl: resolveVideoUrl(ep.videoUrl, `${item.slug}-ep-${ep.number}`),
-        }))
+      ? item.episodes.map((ep: any) => {
+          const epSlug = ep.slug || `episode-${ep.number}`;
+          const epPath = `${item.slug}/${epSlug}`;
+          return {
+            id: ep.id,
+            number: ep.number,
+            slug: epSlug,
+            title: ep.title,
+            thumbnail: ep.thumbnail ? resolvePosterUrl(ep.thumbnail, epPath) : ep.thumbnail,
+            duration: ep.duration,
+            synopsis: ep.synopsis,
+            videoUrl: resolveVideoUrl(ep.videoUrl, epPath),
+          };
+        })
       : [],
   };
 }

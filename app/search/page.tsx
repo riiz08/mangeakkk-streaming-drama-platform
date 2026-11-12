@@ -4,7 +4,7 @@ import SearchView from "@/components/search/SearchView";
 import { SkeletonRow } from "@/components/ui/Skeleton";
 import { searchContents } from "@/lib/data/db";
 
-export const revalidate = 1800; // Revalidate setiap 30 menit
+export const revalidate = 86400; // Revalidate setiap 24 jam (1 hari), on-demand revalidation via server actions
 
 export const metadata: Metadata = {
   title: "Cari Drama & Film — Mangeakkk",
