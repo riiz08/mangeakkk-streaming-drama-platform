@@ -62,11 +62,10 @@ export default function WatchView({ content, currentEpisodeSlug }: WatchViewProp
         <div className="flex items-center gap-2">
           <button
             onClick={() => setBookmarked(!bookmarked)}
-            className={`p-2 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition-colors ${
-              bookmarked
+            className={`p-2 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition-colors ${bookmarked
                 ? "bg-brand-600/20 border-brand-500/50 text-brand-400"
                 : "bg-gray-900 border-gray-800 text-gray-300 hover:text-white"
-            }`}
+              }`}
           >
             <Bookmark className={`w-4 h-4 ${bookmarked ? "fill-brand-400" : ""}`} />
             <span className="hidden sm:inline">{bookmarked ? "Tersimpan" : "Simpan"}</span>
