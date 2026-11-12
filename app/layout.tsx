@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "Mangeakkk — Nonton Streaming Drama & Film Subtitle Indonesia",
@@ -39,13 +38,6 @@ export default function RootLayout({
         <Navbar />
         <main className="flex-1 w-full">{children}</main>
         <Footer />
-
-        <Script
-          src="https://quge5.com/88/tag.min.js"
-          data-zone="309368"
-          data-cfasync="false"
-          strategy="afterInteractive"
-        />
       </body>
     </html>
   );
