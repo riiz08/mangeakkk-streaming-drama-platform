@@ -8,9 +8,6 @@ import { Content, Episode } from "@/lib/data/mock";
 import VideoPlayer from "@/components/ui/VideoPlayer";
 import EpisodeList from "@/components/ui/EpisodeList";
 import BadgeLabel from "@/components/ui/BadgeLabel";
-import AdBanner from "@/components/ads/AdBanner";
-import AdSlot from "@/components/ads/AdSlot";
-import AdGridBlock from "@/components/ads/AdGridBlock";
 
 interface WatchViewProps {
   content: Content;
@@ -85,11 +82,6 @@ export default function WatchView({ content, currentEpisodeSlug }: WatchViewProp
         </div>
       </div>
 
-      {/* Ads: 8 iklan grid 2 kolom (desktop) / 1 kolom (mobile) di atas video player */}
-      <div className="my-2 sm:my-3">
-        <AdGridBlock />
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-2">
         {/* Left Column: Player & Info (2 cols on large screen) */}
         <div className="lg:col-span-2 space-y-4">
@@ -103,9 +95,6 @@ export default function WatchView({ content, currentEpisodeSlug }: WatchViewProp
             onPrevEpisode={handlePrev}
             onNextEpisode={handleNext}
           />
-
-          {/* Ads: 1x AdBanner di bawah video player */}
-          <AdBanner slotName="Player Mid In-Feed Banner" variant="compact" className="my-4" />
 
           {/* Under player info */}
           <div className="bg-gray-900/50 border border-gray-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
@@ -148,7 +137,7 @@ export default function WatchView({ content, currentEpisodeSlug }: WatchViewProp
           </div>
         </div>
 
-        {/* Right Column: Episode selector & Sidebar Ad */}
+        {/* Right Column: Episode selector */}
         <div className="space-y-6">
           <div className="bg-gray-900/50 border border-gray-800/80 rounded-2xl p-5">
             <h2 className="text-lg font-bold text-white mb-4 flex items-center justify-between">
@@ -166,9 +155,6 @@ export default function WatchView({ content, currentEpisodeSlug }: WatchViewProp
               />
             </div>
           </div>
-
-          {/* Ads: 1x AdSlot 300x250 di sidebar */}
-          <AdSlot type="300x250" slotName="Player Sidebar Sponsor" />
         </div>
       </div>
     </div>
