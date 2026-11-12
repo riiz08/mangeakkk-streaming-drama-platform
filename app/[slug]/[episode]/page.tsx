@@ -8,7 +8,7 @@ interface PageProps {
   params: Promise<{ slug: string; episode: string }>;
 }
 
-export const revalidate = 86400; // Revalidate setiap 24 jam (file HLS tidak berubah setelah upload)
+export const revalidate = 2592000; // Revalidate setiap 30 hari (file HLS tidak berubah setelah upload, on-demand revalidation via server actions)
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug, episode } = await params;

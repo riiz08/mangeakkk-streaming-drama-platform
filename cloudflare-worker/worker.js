@@ -14,20 +14,20 @@ const TYPES = {
 	webp: 'image/webp',
 };
 
-const ALLOWED_ORIGINS = [
-	'https://tengokfull.web.id',
-	'https://www.tengokfull.web.id',
-];
-const isAllowed = (origin) =>
-	ALLOWED_ORIGINS.includes(origin) ||
-	/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin || '');
-
 export default {
 	async fetch(request, env) {
+		// CORS: daftar origin dari variabel ALLOWED_ORIGINS (pisah koma, atau "*")
 		const origin = request.headers.get('Origin');
-		const cors = isAllowed(origin)
-			? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' }
-			: {};
+		const allowed = (env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
+		let cors = {};
+		if (allowed.includes('*')) {
+			cors = { 'Access-Control-Allow-Origin': '*' };
+		} else if (origin && allowed.includes(origin)) {
+			cors = { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' };
+		} else if (!allowed.length) {
+			// Fallback jika ALLOWED_ORIGINS belum di-set di environment Worker
+			cors = { 'Access-Control-Allow-Origin': '*' };
+		}
 		const reply = (body, status) => new Response(body, { status, headers: cors });
 
 		if (request.method === 'OPTIONS') {
@@ -40,9 +40,9 @@ export default {
 			return reply('Method Not Allowed', 405);
 		}
 
-		// URL: /{videoId}/{sig}/{file...}
+		// URL: /{sig}/{videoId}/{file...}
 		const url = new URL(request.url);
-		const [videoId, sig, ...rest] = url.pathname.slice(1).split('/');
+		const [sig, videoId, ...rest] = url.pathname.slice(1).split('/');
 
 		let file;
 		try {
@@ -64,14 +64,10 @@ export default {
 		);
 		if (!ok) return reply('Forbidden', 403);
 
-		// Key R2 sesuai struktur upload:
-		//   HLS    -> videos/{folder}/{filename}
-		//   Poster -> posters/{timestamp}-{filename}
-		const r2Key = file.startsWith('posters/')
-			? file
-			: `videos/${videoId}/${file}`;
-
-		const obj = await env.BUCKET.get(r2Key);
+		// Ambil langsung ${videoId}/${file} dari bucket R2
+		// Contoh: videoId = "videos", file = "film-badut-gendong/poster.jpg"
+		// -> R2 key = "videos/film-badut-gendong/poster.jpg"
+		const obj = await env.BUCKET.get(`${videoId}/${file}`);
 		if (!obj) return reply('Not found', 404);
 
 		const ext = (file.split('.').pop() || '').toLowerCase();

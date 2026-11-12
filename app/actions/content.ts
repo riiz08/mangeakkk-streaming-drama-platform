@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { MOCK_CONTENTS } from "@/lib/data/mock";
+import { getSignedPosterUrl, getSignedVideoUrl } from "@/lib/signed-url";
 
 export interface ContentFormData {
   title: string;
@@ -37,17 +38,20 @@ export interface ContentFormData {
 
 export async function createContentAction(data: ContentFormData) {
   try {
+    const cleanContentSlug = data.slug.trim();
     const defaultPoster =
-      data.poster?.trim() ||
-      "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&auto=format&fit=crop&q=80";
+      data.poster?.trim() || getSignedPosterUrl(cleanContentSlug, "poster.jpg");
     const defaultBackdrop =
-      data.backdrop?.trim() ||
-      "https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?w=1600&auto=format&fit=crop&q=80";
+      data.backdrop?.trim() || getSignedPosterUrl(cleanContentSlug, "backdrop.jpg");
+    const filmVideoUrl =
+      data.type === "film"
+        ? data.videoUrl?.trim() || getSignedVideoUrl(cleanContentSlug, "index.m3u8")
+        : null;
 
     const content = await prisma.content.create({
       data: {
         title: data.title.trim(),
-        slug: data.slug.trim(),
+        slug: cleanContentSlug,
         type: data.type,
         poster: defaultPoster,
         backdrop: defaultBackdrop,
@@ -57,7 +61,7 @@ export async function createContentAction(data: ContentFormData) {
         director: data.director?.trim() || "Sutradara Pilihan",
         duration: data.duration.trim() || (data.type === "film" ? "120 min" : "60 min/ep"),
         totalEpisodes: data.type === "tv-series" ? data.episodes?.length || 0 : null,
-        videoUrl: data.type === "film" ? data.videoUrl?.trim() || null : null,
+        videoUrl: filmVideoUrl,
         isTrending: Boolean(data.isTrending),
         hasNewEpisode: Boolean(data.hasNewEpisode),
         isPilihan: Boolean(data.isPilihan),
@@ -79,17 +83,20 @@ export async function createContentAction(data: ContentFormData) {
         episodes:
           data.type === "tv-series" && data.episodes && data.episodes.length > 0
             ? {
-                create: data.episodes.map((ep) => ({
-                  number: ep.number,
-                  slug: ep.slug || `episode-${ep.number}`,
-                  title: ep.title || `Episode ${ep.number}`,
-                  thumbnail: ep.thumbnail || defaultBackdrop,
-                  duration: ep.duration || "60m",
-                  synopsis: ep.synopsis || `Episode ${ep.number} serial ${data.title}.`,
-                  videoUrl:
-                    ep.videoUrl ||
-                    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                })),
+                create: data.episodes.map((ep) => {
+                  const epSlug = ep.slug || `episode-${ep.number}`;
+                  const epPath = `${cleanContentSlug}/${epSlug}`;
+                  return {
+                    number: ep.number,
+                    slug: epSlug,
+                    title: ep.title || `Episode ${ep.number}`,
+                    thumbnail: ep.thumbnail || defaultPoster,
+                    duration: ep.duration || "60m",
+                    synopsis: ep.synopsis || `Episode ${ep.number} serial ${data.title}.`,
+                    videoUrl:
+                      ep.videoUrl?.trim() || getSignedVideoUrl(epPath, "index.m3u8"),
+                  };
+                }),
               }
             : undefined,
       },
@@ -102,6 +109,14 @@ export async function createContentAction(data: ContentFormData) {
     revalidatePath("/admin");
     revalidatePath(`/${content.slug}`);
 
+    if (data.type === "film") {
+      revalidatePath(`/${content.slug}/streaming`);
+    } else if (data.episodes) {
+      for (const ep of data.episodes) {
+        revalidatePath(`/${content.slug}/${ep.slug || `episode-${ep.number}`}`);
+      }
+    }
+
     return { success: true, data: content };
   } catch (error: any) {
     console.error("Error creating content in DB:", error);
@@ -111,12 +126,15 @@ export async function createContentAction(data: ContentFormData) {
 
 export async function updateContentAction(id: string, data: ContentFormData) {
   try {
+    const cleanContentSlug = data.slug.trim();
     const defaultPoster =
-      data.poster?.trim() ||
-      "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&auto=format&fit=crop&q=80";
+      data.poster?.trim() || getSignedPosterUrl(cleanContentSlug, "poster.jpg");
     const defaultBackdrop =
-      data.backdrop?.trim() ||
-      "https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?w=1600&auto=format&fit=crop&q=80";
+      data.backdrop?.trim() || getSignedPosterUrl(cleanContentSlug, "backdrop.jpg");
+    const filmVideoUrl =
+      data.type === "film"
+        ? data.videoUrl?.trim() || getSignedVideoUrl(cleanContentSlug, "index.m3u8")
+        : null;
 
     // Delete existing episodes and re-create to maintain sync
     if (data.type === "tv-series") {
@@ -129,7 +147,7 @@ export async function updateContentAction(id: string, data: ContentFormData) {
       where: { id },
       data: {
         title: data.title.trim(),
-        slug: data.slug.trim(),
+        slug: cleanContentSlug,
         type: data.type,
         poster: defaultPoster,
         backdrop: defaultBackdrop,
@@ -139,7 +157,7 @@ export async function updateContentAction(id: string, data: ContentFormData) {
         director: data.director?.trim() || "Sutradara Pilihan",
         duration: data.duration.trim() || (data.type === "film" ? "120 min" : "60 min/ep"),
         totalEpisodes: data.type === "tv-series" ? data.episodes?.length || 0 : null,
-        videoUrl: data.type === "film" ? data.videoUrl?.trim() || null : null,
+        videoUrl: filmVideoUrl,
         isTrending: Boolean(data.isTrending),
         hasNewEpisode: Boolean(data.hasNewEpisode),
         isPilihan: Boolean(data.isPilihan),
@@ -147,17 +165,20 @@ export async function updateContentAction(id: string, data: ContentFormData) {
         episodes:
           data.type === "tv-series" && data.episodes && data.episodes.length > 0
             ? {
-                create: data.episodes.map((ep) => ({
-                  number: ep.number,
-                  slug: ep.slug || `episode-${ep.number}`,
-                  title: ep.title || `Episode ${ep.number}`,
-                  thumbnail: ep.thumbnail || defaultBackdrop,
-                  duration: ep.duration || "60m",
-                  synopsis: ep.synopsis || `Episode ${ep.number} serial ${data.title}.`,
-                  videoUrl:
-                    ep.videoUrl ||
-                    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                })),
+                create: data.episodes.map((ep) => {
+                  const epSlug = ep.slug || `episode-${ep.number}`;
+                  const epPath = `${cleanContentSlug}/${epSlug}`;
+                  return {
+                    number: ep.number,
+                    slug: epSlug,
+                    title: ep.title || `Episode ${ep.number}`,
+                    thumbnail: ep.thumbnail || defaultPoster,
+                    duration: ep.duration || "60m",
+                    synopsis: ep.synopsis || `Episode ${ep.number} serial ${data.title}.`,
+                    videoUrl:
+                      ep.videoUrl?.trim() || getSignedVideoUrl(epPath, "index.m3u8"),
+                  };
+                }),
               }
             : undefined,
       },
@@ -169,6 +190,14 @@ export async function updateContentAction(id: string, data: ContentFormData) {
     revalidatePath("/search");
     revalidatePath("/admin");
     revalidatePath(`/${content.slug}`);
+
+    if (data.type === "film") {
+      revalidatePath(`/${content.slug}/streaming`);
+    } else if (data.episodes) {
+      for (const ep of data.episodes) {
+        revalidatePath(`/${content.slug}/${ep.slug || `episode-${ep.number}`}`);
+      }
+    }
 
     return { success: true, data: content };
   } catch (error: any) {
@@ -188,12 +217,54 @@ export async function deleteContentAction(id: string) {
     revalidatePath("/film");
     revalidatePath("/search");
     revalidatePath("/admin");
+    if (content.slug) {
+      revalidatePath(`/${content.slug}`);
+    }
 
     return { success: true, data: content };
   } catch (error: any) {
     console.error("Error deleting content from DB:", error);
     return { success: false, error: error.message || "Gagal menghapus konten dari database." };
   }
+}
+
+export async function getAutoGeneratedUrlsAction(
+  slug: string,
+  type: "tv-series" | "film",
+  episodesCount = 1
+) {
+  const clean = slug.trim();
+  if (!clean) {
+    return {
+      poster: "",
+      backdrop: "",
+      videoUrl: "",
+      episodes: [],
+    };
+  }
+
+  const poster = getSignedPosterUrl(clean, "poster.jpg");
+  const backdrop = getSignedPosterUrl(clean, "backdrop.jpg");
+  const videoUrl = type === "film" ? getSignedVideoUrl(clean, "index.m3u8") : "";
+
+  const episodes = [];
+  for (let i = 1; i <= Math.max(1, episodesCount); i++) {
+    const epSlug = `episode-${i}`;
+    episodes.push({
+      number: i,
+      slug: epSlug,
+      title: `Episode ${i}`,
+      videoUrl: getSignedVideoUrl(`${clean}/${epSlug}`, "index.m3u8"),
+      thumbnail: poster,
+    });
+  }
+
+  return {
+    poster,
+    backdrop,
+    videoUrl,
+    episodes,
+  };
 }
 
 export async function seedDefaultContentsAction() {

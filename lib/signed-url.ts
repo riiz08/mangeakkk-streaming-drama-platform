@@ -6,14 +6,15 @@ import crypto from "crypto";
  */
 const DEFAULT_SECRET = "riizadminmangeakkk";
 const DEFAULT_WORKER_BASE = "https://hls-worker.riskimhmmd0.workers.dev";
+const DEFAULT_VIDEO_ID = "videos";
 
 /**
  * Get configured Worker base URL without trailing slash
  */
 export function getWorkerBaseUrl(): string {
   const base =
+    process.env.NEXT_PUBLIC_VIDEO_WORKER_BASE_URL ||
     process.env.VIDEO_WORKER_BASE_URL ||
-    process.env.R2_PUBLIC_URL ||
     DEFAULT_WORKER_BASE;
   return base.replace(/\/+$/, "");
 }
@@ -27,11 +28,11 @@ export function getVideoSecret(): string {
 }
 
 /**
- * Compute HMAC-SHA256 signature for a given videoId
- * Formula: sig = crypto.createHmac('sha256', SECRET).update(videoId).digest('hex')
- * Expiration is removed per caching strategy requirements.
+ * Compute HMAC-SHA256 signature for a given videoId (default: "videos")
+ * Worker verifies: HMAC-SHA256(SECRET, videoId) where videoId = "videos"
+ * URL structure: /{sig}/{videoId}/{file...}
  */
-export function signVideoId(videoId: string): string {
+export function signVideoId(videoId = DEFAULT_VIDEO_ID): string {
   if (!videoId) return "";
   const secret = getVideoSecret();
   return crypto.createHmac("sha256", secret).update(videoId).digest("hex");
@@ -54,60 +55,50 @@ export function verifySignature(videoId: string, signature: string): boolean {
 }
 
 /**
- * Helper to extract or sanitize a clean videoId from an id, path, or URL.
- * Examples:
- * - "video-001" -> "video-001"
- * - "videos/video-001/index.m3u8" -> "video-001"
- * - "posters/video-001/poster.jpg" -> "video-001"
- * - "https://hls-worker.riskimhmmd0.workers.dev/video-001/..." -> "video-001"
+ * Helper to clean/sanitize a content slug
  */
-export function cleanVideoId(rawIdOrPath: string): string {
-  if (!rawIdOrPath) return "";
-  let id = rawIdOrPath.trim();
+export function cleanSlug(rawSlugOrPath: string): string {
+  if (!rawSlugOrPath) return "";
+  let s = rawSlugOrPath.trim();
 
-  // If it's a full URL, parse the pathname
-  if (id.startsWith("http://") || id.startsWith("https://")) {
+  // If full URL, parse pathname
+  if (s.startsWith("http://") || s.startsWith("https://")) {
     try {
-      const url = new URL(id);
-      id = url.pathname;
+      const url = new URL(s);
+      s = url.pathname;
     } catch {
       // ignore
     }
   }
 
   // Remove leading and trailing slashes
-  id = id.replace(/^\/+|\/+$/g, "");
+  s = s.replace(/^\/+|\/+$/g, "");
 
-  // If path starts with videos/ or posters/
-  if (id.startsWith("videos/")) {
-    const parts = id.replace(/^videos\//, "").split("/");
-    return parts[0] || id;
-  }
-  if (id.startsWith("posters/")) {
-    const parts = id.replace(/^posters\//, "").split("/");
-    return parts[0] || id;
+  // If starts with hex sig (64 chars)
+  const segments = s.split("/");
+  if (segments[0] && /^[0-9a-f]{64}$/i.test(segments[0])) {
+    segments.shift(); // remove sig
   }
 
-  // If path has segments (e.g. videoId/sig/index.m3u8)
-  const parts = id.split("/");
-  if (parts.length > 1) {
-    return parts[0];
+  // If starts with "videos/"
+  if (segments[0] === "videos") {
+    segments.shift(); // remove "videos"
+  } else if (segments[0] === "posters") {
+    segments.shift(); // remove legacy "posters"
   }
 
-  return id;
+  return segments.join("/").replace(/\/+$/, "");
 }
 
 /**
- * Check if a URL or path is associated with our Cloudflare Worker or R2 bucket
+ * Check if a URL or path is associated with Cloudflare Worker or R2 bucket
  */
 export function isWorkerOrR2Url(url: string): boolean {
   if (!url) return false;
   const workerBase = getWorkerBaseUrl();
-  const r2Public = process.env.R2_PUBLIC_URL || "";
   return (
-    url.includes("hls-worker.riskimhmmd0.workers.dev") ||
+    url.includes("hls-worker") ||
     (Boolean(workerBase) && url.startsWith(workerBase)) ||
-    (Boolean(r2Public) && url.startsWith(r2Public)) ||
     url.includes(".r2.dev") ||
     url.startsWith("videos/") ||
     url.startsWith("posters/")
@@ -116,97 +107,101 @@ export function isWorkerOrR2Url(url: string): boolean {
 
 /**
  * Generate signed HLS video URL:
- * Format: {BASE}/{videoId}/{sig}/index.m3u8
+ * Format: {BASE}/{sig}/videos/{slug}/index.m3u8
  *
- * @param videoId Identifier or folder of the video (e.g. "video-001")
- * @param filename File to serve (default "index.m3u8")
+ * Contoh:
+ * - film: {BASE}/{sig}/videos/film-badut-gendong/index.m3u8
+ * - episode: {BASE}/{sig}/videos/queen-of-tears/episode-1/index.m3u8
  */
 export function getSignedVideoUrl(
-  videoId: string,
+  slugOrPath: string,
   filename = "index.m3u8"
 ): string {
-  if (!videoId) return "";
-  const cleanId = cleanVideoId(videoId);
+  if (!slugOrPath) return "";
   const base = getWorkerBaseUrl();
-  const sig = signVideoId(cleanId);
+  const sig = signVideoId(DEFAULT_VIDEO_ID);
+  const clean = cleanSlug(slugOrPath);
   const cleanFilename = filename.replace(/^\/+/, "");
-  return `${base}/${cleanId}/${sig}/${cleanFilename}`;
-}
 
-/**
- * Generate signed URL for any arbitrary R2 file key:
- * Format: {BASE}/{videoId}/{sig}/{r2Key}
- *
- * For poster files:
- * - Worker checks: `const r2Key = file.startsWith('posters/') ? file : videos/{videoId}/{file}`
- * - So when `r2Key` starts with `posters/` (e.g. `posters/1234-name.jpg`), the Worker
- *   directly fetches `posters/1234-name.jpg` from the R2 bucket.
- *
- * @param videoId Content identifier or folder used for the HMAC signature
- * @param r2Key The exact R2 storage key path (e.g. "posters/1234-img.jpg" or "index.m3u8")
- */
-export function getSignedUrlForKey(
-  videoId: string,
-  r2Key: string
-): string {
-  if (!r2Key) return "";
-  const cleanId = cleanVideoId(videoId) || "media";
-  const base = getWorkerBaseUrl();
-  const sig = signVideoId(cleanId);
-  const cleanKey = r2Key.replace(/^\/+/, "");
-  return `${base}/${cleanId}/${sig}/${cleanKey}`;
-}
-
-/**
- * Generate signed poster image URL:
- * Format: {BASE}/{videoId}/{sig}/{posterKey}
- *
- * @param videoId Identifier of the content
- * @param posterKey Optional specific R2 poster key (e.g. "posters/1234-name.jpg").
- *                  If not provided, defaults to "posters/{cleanId}.jpg".
- */
-export function getSignedPosterUrl(
-  videoId: string,
-  posterKey?: string
-): string {
-  if (!videoId && !posterKey) return "";
-  const cleanId = cleanVideoId(videoId) || "media";
-
-  if (posterKey) {
-    const cleanKey = posterKey.replace(/^\/+/, "");
-    const fullKey = cleanKey.startsWith("posters/") ? cleanKey : `posters/${cleanKey}`;
-    return getSignedUrlForKey(cleanId, fullKey);
+  // If slugOrPath already ends with .m3u8, use it directly
+  if (clean.endsWith(".m3u8") || clean.endsWith(".mp4")) {
+    return `${base}/${sig}/videos/${clean}`;
   }
 
-  return getSignedUrlForKey(cleanId, `posters/${cleanId}.jpg`);
+  return `${base}/${sig}/videos/${clean}/${cleanFilename}`;
+}
+
+/**
+ * Generate signed poster/backdrop image URL:
+ * Format: {BASE}/{sig}/videos/{slug}/poster.(jpg|jpeg|png|webp)
+ *
+ * Contoh:
+ * - {BASE}/{sig}/videos/film-badut-gendong/poster.jpg
+ * - {BASE}/{sig}/videos/queen-of-tears/poster.jpg
+ */
+export function getSignedPosterUrl(
+  slugOrPath: string,
+  filename = "poster.jpg"
+): string {
+  if (!slugOrPath) return "";
+  const base = getWorkerBaseUrl();
+  const sig = signVideoId(DEFAULT_VIDEO_ID);
+  const clean = cleanSlug(slugOrPath);
+  const cleanFilename = filename.replace(/^\/+/, "");
+
+  // If clean already ends with an image extension, use it directly
+  if (/\.(jpg|jpeg|png|webp|avif)$/i.test(clean)) {
+    return `${base}/${sig}/videos/${clean}`;
+  }
+
+  return `${base}/${sig}/videos/${clean}/${cleanFilename}`;
+}
+
+/**
+ * Generate signed URL for any arbitrary R2 file key under videos/
+ * Format: {BASE}/{sig}/videos/{subpath}
+ */
+export function getSignedUrlForKey(storageKey: string): string {
+  if (!storageKey) return "";
+  const base = getWorkerBaseUrl();
+  const sig = signVideoId(DEFAULT_VIDEO_ID);
+  let cleanKey = storageKey.replace(/^\/+/, "");
+
+  // If key starts with "videos/", keep it after sig: {base}/{sig}/videos/...
+  if (cleanKey.startsWith("videos/")) {
+    return `${base}/${sig}/${cleanKey}`;
+  }
+
+  return `${base}/${sig}/videos/${cleanKey}`;
 }
 
 /**
  * Smart resolver for poster / backdrop image URLs.
- * - If already a signed Worker URL with valid segment structure, return as is.
- * - If external third-party URL (e.g. Unsplash, TMDB, Google), return as is.
- * - If R2 storage URL, storage key, or raw video ID, return signed poster URL.
+ * - If already a signed Worker URL with valid format, return as is.
+ * - If external third-party URL (e.g. Unsplash, TMDB), return as is.
+ * - If R2 storage URL, storage key, or slug, return signed poster URL.
  */
 export function resolvePosterUrl(
   posterUrlOrId?: string,
-  fallbackId?: string
+  fallbackSlug?: string
 ): string {
-  if (!posterUrlOrId && !fallbackId) return "";
-  const target = (posterUrlOrId || fallbackId || "").trim();
+  if (!posterUrlOrId && !fallbackSlug) return "";
+  const target = (posterUrlOrId || fallbackSlug || "").trim();
   if (!target) return "";
 
   const workerBase = getWorkerBaseUrl();
 
-  // If already a signed worker URL (contains worker base and at least 3 parts: videoId/sig/file)
+  // If already a signed worker URL (contains worker base and valid /videos/ structure)
   if (target.startsWith(workerBase)) {
     const afterBase = target.replace(workerBase, "").replace(/^\/+/, "");
     const parts = afterBase.split("/");
-    if (parts.length >= 3) {
+    // Format: {sig}/videos/{slug}/... (at least 3 parts)
+    if (parts.length >= 3 && /^[0-9a-f]{64}$/i.test(parts[0])) {
       return target;
     }
   }
 
-  // If external non-R2 URL, preserve original URL
+  // If external non-R2 URL (Unsplash, TMDB, etc.), preserve original URL
   if (
     (target.startsWith("http://") || target.startsWith("https://")) &&
     !isWorkerOrR2Url(target)
@@ -214,47 +209,36 @@ export function resolvePosterUrl(
     return target;
   }
 
-  // Extract path if it was a full R2 URL
-  let r2Key = target;
-  if (target.startsWith("http://") || target.startsWith("https://")) {
-    try {
-      const parsed = new URL(target);
-      r2Key = parsed.pathname.replace(/^\/+/, "");
-    } catch {
-      // ignore
-    }
-  }
+  // Otherwise, generate signed poster URL using target or fallback
+  const targetSlug = fallbackSlug || target;
+  // If target has a specific image filename (e.g. backdrop.jpg, poster.webp)
+  const extMatch = target.match(/([^/]+\.(?:jpg|jpeg|png|webp|avif))$/i);
+  const filename = extMatch ? extMatch[1] : "poster.jpg";
 
-  const videoId = fallbackId ? cleanVideoId(fallbackId) : "media";
-  if (r2Key.startsWith("posters/")) {
-    return getSignedUrlForKey(videoId, r2Key);
-  }
-
-  const cleanId = cleanVideoId(target) || videoId;
-  return getSignedPosterUrl(cleanId);
+  return getSignedPosterUrl(targetSlug, filename);
 }
 
 /**
  * Smart resolver for video stream URLs (.m3u8).
- * - If already a signed Worker URL with valid segment structure, return as is.
- * - If external third-party stream (e.g. Mux test stream, Google Storage), return as is.
- * - If R2 storage URL, storage key, or raw video ID, return signed HLS URL.
+ * - If already a signed Worker URL with valid format, return as is.
+ * - If external third-party stream, return as is.
+ * - If R2 storage URL, storage key, or slug, return signed HLS URL.
  */
 export function resolveVideoUrl(
   videoUrlOrId?: string,
-  fallbackId?: string
+  fallbackSlug?: string
 ): string {
-  if (!videoUrlOrId && !fallbackId) return "";
-  const target = (videoUrlOrId || fallbackId || "").trim();
+  if (!videoUrlOrId && !fallbackSlug) return "";
+  const target = (videoUrlOrId || fallbackSlug || "").trim();
   if (!target) return "";
 
   const workerBase = getWorkerBaseUrl();
 
-  // If already a signed worker URL (contains worker base and at least 3 parts: videoId/sig/file)
+  // If already a signed worker URL (contains worker base and valid /videos/ structure)
   if (target.startsWith(workerBase)) {
     const afterBase = target.replace(workerBase, "").replace(/^\/+/, "");
     const parts = afterBase.split("/");
-    if (parts.length >= 3) {
+    if (parts.length >= 3 && /^[0-9a-f]{64}$/i.test(parts[0])) {
       return target;
     }
   }
@@ -267,8 +251,6 @@ export function resolveVideoUrl(
     return target;
   }
 
-  const videoId =
-    cleanVideoId(target) || (fallbackId ? cleanVideoId(fallbackId) : "video");
-  return getSignedVideoUrl(videoId);
+  const targetSlug = fallbackSlug || target;
+  return getSignedVideoUrl(targetSlug);
 }
-
