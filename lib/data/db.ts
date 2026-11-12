@@ -44,13 +44,14 @@ export interface Content {
 
 // Helper to format Prisma model output to match the application Content interface
 export function formatContent(item: any): Content {
+  const posterUrl = resolvePosterUrl(item.poster, item.slug);
   return {
     id: String(item.id),
     slug: item.slug,
     title: item.title,
     type: item.type as "tv-series" | "film",
-    poster: resolvePosterUrl(item.poster, item.slug),
-    backdrop: item.backdrop ? resolvePosterUrl(item.backdrop, item.slug) : item.backdrop,
+    poster: posterUrl,
+    backdrop: item.backdrop ? resolvePosterUrl(item.backdrop, item.slug) : posterUrl,
     synopsis: item.synopsis,
     year: Number(item.year),
     country: item.country,
@@ -73,7 +74,7 @@ export function formatContent(item: any): Content {
             number: ep.number,
             slug: epSlug,
             title: ep.title,
-            thumbnail: ep.thumbnail ? resolvePosterUrl(ep.thumbnail, epPath) : ep.thumbnail,
+            thumbnail: ep.thumbnail ? resolvePosterUrl(ep.thumbnail, epPath) : posterUrl,
             duration: ep.duration,
             synopsis: ep.synopsis,
             videoUrl: resolveVideoUrl(ep.videoUrl, epPath),
