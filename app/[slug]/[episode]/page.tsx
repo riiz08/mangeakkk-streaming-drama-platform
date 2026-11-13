@@ -2,7 +2,11 @@ import React from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import WatchView from "@/components/player/WatchView";
-import { getContentBySlug, getEpisodeBySlug } from "@/lib/data/db";
+import {
+  getContentBySlug,
+  getEpisodeBySlug,
+  getRelatedContents,
+} from "@/lib/data/db";
 import Script from "next/script";
 
 interface PageProps {
@@ -17,7 +21,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!content) {
     return {
-      title: "Episode Tidak Ditemukan — Mangeakkk",
+      title: "Halaman Tidak Ditemukan — Mangeakkk",
+    };
+  }
+
+  if (content.type === "film") {
+    return {
+      title: `Nonton Film ${content.title} Sub Indo — Mangeakkk`,
+      description:
+        content.synopsis ||
+        `Nonton film bioskop ${content.title} subtitle Indonesia kualitas HD di Mangeakkk.`,
+      openGraph: {
+        title: `${content.title} — Mangeakkk`,
+        description: content.synopsis,
+        images: [{ url: content.backdrop || content.poster }],
+      },
     };
   }
 
@@ -26,7 +44,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `Nonton ${content.title}${epTitle} Sub Indo — Mangeakkk`,
-    description: ep?.synopsis || `Nonton serial drama ${content.title} ${episode} subtitle Indonesia di Mangeakkk.`,
+    description:
+      ep?.synopsis ||
+      `Nonton serial drama ${content.title} ${episode} subtitle Indonesia di Mangeakkk.`,
     openGraph: {
       title: `${content.title}${epTitle} — Mangeakkk`,
       description: ep?.synopsis || content.synopsis,
@@ -35,14 +55,31 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function DramaEpisodeWatchPage({ params }: PageProps) {
+export default async function WatchPage({ params }: PageProps) {
   const { slug, episode } = await params;
   const content = await getContentBySlug(slug);
 
-  if (!content || content.type !== "tv-series") {
+  if (!content) {
     notFound();
   }
 
+  // Jika tipe FILM
+  if (content.type === "film") {
+    const related = await getRelatedContents(content);
+    return (
+      <>
+        <WatchView content={content} related={related} />
+        <Script
+          src="https://quge5.com/88/tag.min.js"
+          data-zone="309368"
+          data-cfasync="false"
+          strategy="afterInteractive"
+        />
+      </>
+    );
+  }
+
+  // Jika tipe TV-SERIES
   const ep = getEpisodeBySlug(content, episode);
   if (!ep) {
     notFound();
@@ -58,5 +95,5 @@ export default async function DramaEpisodeWatchPage({ params }: PageProps) {
         strategy="afterInteractive"
       />
     </>
-  )
+  );
 }

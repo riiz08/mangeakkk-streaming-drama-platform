@@ -28,6 +28,7 @@ import {
   Link2,
   Copy,
   ExternalLink,
+  Users,
 } from "lucide-react";
 import { Content, AdminStats } from "@/lib/data/db";
 import BadgeLabel from "@/components/ui/BadgeLabel";
@@ -74,6 +75,10 @@ export default function AdminDashboard({ initialContents, stats }: AdminDashboar
   const [formSynopsis, setFormSynopsis] = useState("");
   const [formYear, setFormYear] = useState(new Date().getFullYear());
   const [formCountry, setFormCountry] = useState("Korea Selatan");
+  const [formDirector, setFormDirector] = useState("");
+  const [formCast, setFormCast] = useState<{ name: string; photo?: string }[]>([
+    { name: "", photo: "" },
+  ]);
   const [formDuration, setFormDuration] = useState("60 min/ep");
   const [formVideoUrl, setFormVideoUrl] = useState("");
 
@@ -216,6 +221,21 @@ export default function AdminDashboard({ initialContents, stats }: AdminDashboar
     setFormEpisodes(updated);
   };
 
+  const handleAddCastRow = () => {
+    setFormCast([...formCast, { name: "", photo: "" }]);
+  };
+
+  const handleRemoveCastRow = (index: number) => {
+    if (formCast.length <= 1) return;
+    setFormCast(formCast.filter((_, i) => i !== index));
+  };
+
+  const handleCastChange = (index: number, field: "name" | "photo", val: string) => {
+    const updated = [...formCast];
+    updated[index] = { ...updated[index], [field]: val };
+    setFormCast(updated);
+  };
+
   const handleResetForm = () => {
     setEditingId(null);
     setFormTitle("");
@@ -225,6 +245,8 @@ export default function AdminDashboard({ initialContents, stats }: AdminDashboar
     setFormSynopsis("");
     setFormYear(new Date().getFullYear());
     setFormCountry("Korea Selatan");
+    setFormDirector("");
+    setFormCast([{ name: "", photo: "" }]);
     setFormDuration("60 min/ep");
     setFormVideoUrl("");
     setFormIsTrending(false);
@@ -250,13 +272,25 @@ export default function AdminDashboard({ initialContents, stats }: AdminDashboar
     setFormPoster(item.poster);
     setFormSynopsis(item.synopsis);
     setFormYear(item.year);
-    setFormCountry(item.country);
+    setFormCountry(item.country || "Korea Selatan");
+    setFormDirector(item.director || "");
     setFormDuration(item.duration);
     setFormVideoUrl(item.videoUrl || "");
     setFormIsTrending(Boolean(item.isTrending));
     setFormHasNewEpisode(Boolean(item.hasNewEpisode));
     setFormIsPilihan(Boolean(item.isPilihan));
     setFormIsFeatured(Boolean(item.isFeatured));
+
+    if (item.cast && item.cast.length > 0) {
+      setFormCast(
+        item.cast.map((c) => ({
+          name: c.name,
+          photo: c.photo || "",
+        }))
+      );
+    } else {
+      setFormCast([{ name: "", photo: "" }]);
+    }
 
     if (item.episodes && item.episodes.length > 0) {
       setFormEpisodes(
@@ -353,13 +387,20 @@ export default function AdminDashboard({ initialContents, stats }: AdminDashboar
       backdrop: formPoster,
       synopsis: formSynopsis,
       year: formYear,
-      country: formCountry,
+      country: formCountry.trim() || "Korea Selatan",
+      director: formDirector.trim() || "Sutradara Pilihan",
       duration: formType === "film" ? formDuration || "120 min" : `${formEpisodes.length} Episode`,
       videoUrl: formType === "film" ? formVideoUrl : undefined,
       isTrending: formIsTrending,
       hasNewEpisode: formHasNewEpisode,
       isPilihan: formIsPilihan,
       isFeatured: formIsFeatured,
+      cast: formCast
+        .filter((c) => c.name.trim() !== "")
+        .map((c) => ({
+          name: c.name.trim(),
+          photo: c.photo?.trim() || undefined,
+        })),
       episodes: formType === "tv-series" ? formEpisodes : undefined,
     };
 
@@ -1102,6 +1143,35 @@ export default function AdminDashboard({ initialContents, stats }: AdminDashboar
               </div>
             </div>
 
+            {/* Negara Asal & Sutradara */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                  Negara Asal *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formCountry}
+                  onChange={(e) => setFormCountry(e.target.value)}
+                  placeholder="Contoh: Korea Selatan, Indonesia..."
+                  className="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-xs focus:border-brand-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                  Sutradara
+                </label>
+                <input
+                  type="text"
+                  value={formDirector}
+                  onChange={(e) => setFormDirector(e.target.value)}
+                  placeholder="Contoh: Bong Joon-ho, Christopher Nolan..."
+                  className="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-xs focus:border-brand-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
             {/* Poster URL */}
             <div className="md:col-span-2">
               <div className="flex items-center justify-between mb-1.5">
@@ -1173,6 +1243,66 @@ export default function AdminDashboard({ initialContents, stats }: AdminDashboar
                 />
                 <span className="text-xs text-purple-400 font-bold">Badge Pilihan</span>
               </label>
+            </div>
+          </div>
+
+          {/* Daftar Pemeran (Cast) */}
+          <div className="pt-2 border-t border-zinc-800/60 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-brand-400" />
+                  Daftar Pemeran (Cast)
+                </label>
+                <p className="text-[11px] text-zinc-500">
+                  Masukkan nama aktor/aktris dan URL foto profil (opsional)
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddCastRow}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Tambah Pemeran</span>
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {formCast.map((c, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-2.5 bg-zinc-950 p-2.5 rounded-xl border border-zinc-800"
+                >
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={c.name}
+                      onChange={(e) => handleCastChange(idx, "name", e.target.value)}
+                      placeholder={`Nama Pemeran #${idx + 1} (contoh: Kim Soo-hyun)`}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={c.photo || ""}
+                      onChange={(e) => handleCastChange(idx, "photo", e.target.value)}
+                      placeholder="URL Foto (opsional, default: poster konten)"
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono text-[11px]"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveCastRow(idx)}
+                    disabled={formCast.length <= 1}
+                    className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Hapus baris pemeran"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
 

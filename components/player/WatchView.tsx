@@ -7,26 +7,41 @@ import { ArrowLeft, Calendar, Clock, Share2, Bookmark } from "lucide-react";
 import { Content, Episode } from "@/lib/data/mock";
 import VideoPlayer from "@/components/ui/VideoPlayer";
 import EpisodeList from "@/components/ui/EpisodeList";
+import ContentCard from "@/components/ui/ContentCard";
 import BadgeLabel from "@/components/ui/BadgeLabel";
 
 interface WatchViewProps {
   content: Content;
-  currentEpisodeSlug: string;
+  currentEpisodeSlug?: string;
+  related?: Content[];
 }
 
-export default function WatchView({ content, currentEpisodeSlug }: WatchViewProps) {
+export default function WatchView({
+  content,
+  currentEpisodeSlug,
+  related = [],
+}: WatchViewProps) {
   const router = useRouter();
+  const isFilm = content.type === "film";
   const episodes = content.episodes || [];
   const [bookmarked, setBookmarked] = useState(false);
 
-  // Active episode
-  const currentEpisode: Episode | undefined =
-    episodes.find((ep) => ep.slug === currentEpisodeSlug) || episodes[0];
+  // Active episode (khusus tv-series)
+  const currentEpisode: Episode | undefined = isFilm
+    ? undefined
+    : episodes.find((ep) => ep.slug === currentEpisodeSlug) || episodes[0];
 
-  const currentVideoUrl = currentEpisode ? currentEpisode.videoUrl : "";
-  const currentIndex = episodes.findIndex((ep) => ep.slug === currentEpisodeSlug);
-  const hasPrev = currentIndex > 0;
-  const hasNext = currentIndex < episodes.length - 1;
+  const currentVideoUrl = isFilm
+    ? content.videoUrl || ""
+    : currentEpisode
+      ? currentEpisode.videoUrl
+      : "";
+
+  const currentIndex = isFilm
+    ? -1
+    : episodes.findIndex((ep) => ep.slug === currentEpisodeSlug);
+  const hasPrev = !isFilm && currentIndex > 0;
+  const hasNext = !isFilm && currentIndex < episodes.length - 1;
 
   const handlePrev = () => {
     if (hasPrev) {
@@ -43,7 +58,11 @@ export default function WatchView({ content, currentEpisodeSlug }: WatchViewProp
   const handleShare = () => {
     if (typeof window !== "undefined") {
       navigator.clipboard?.writeText(window.location.href);
-      alert("Tautan episode berhasil disalin ke clipboard!");
+      alert(
+        isFilm
+          ? "Tautan film berhasil disalin ke clipboard!"
+          : "Tautan episode berhasil disalin ke clipboard!"
+      );
     }
   };
 
@@ -87,8 +106,16 @@ export default function WatchView({ content, currentEpisodeSlug }: WatchViewProp
           {/* Video Player */}
           <VideoPlayer
             videoUrl={currentVideoUrl}
-            poster={currentEpisode?.thumbnail || content.backdrop}
-            title={`${content.title} ${currentEpisode ? `- ${currentEpisode.title}` : ""}`}
+            poster={
+              isFilm
+                ? content.backdrop || content.poster
+                : currentEpisode?.thumbnail || content.backdrop
+            }
+            title={
+              isFilm
+                ? content.title
+                : `${content.title} ${currentEpisode ? `- ${currentEpisode.title}` : ""}`
+            }
             hasPrev={hasPrev}
             hasNext={hasNext}
             onPrevEpisode={handlePrev}
@@ -102,7 +129,7 @@ export default function WatchView({ content, currentEpisodeSlug }: WatchViewProp
                 <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                   {content.title}
                 </h1>
-                {currentEpisode && (
+                {!isFilm && currentEpisode && (
                   <p className="text-brand-400 font-semibold text-sm mt-0.5">
                     {currentEpisode.title}
                   </p>
@@ -124,35 +151,59 @@ export default function WatchView({ content, currentEpisodeSlug }: WatchViewProp
               <span>•</span>
               <span className="flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5" />
-                {currentEpisode?.duration || content.duration}
+                {isFilm ? content.duration : currentEpisode?.duration || content.duration}
               </span>
               <span>•</span>
               <span>{content.country}</span>
+              {content.director && (
+                <>
+                  <span>•</span>
+                  <span>Sutradara: {content.director}</span>
+                </>
+              )}
             </div>
 
             <p className="text-gray-300 text-xs sm:text-sm leading-relaxed pt-2 border-t border-gray-800">
-              {currentEpisode?.synopsis || content.synopsis}
+              {isFilm ? content.synopsis : currentEpisode?.synopsis || content.synopsis}
             </p>
           </div>
         </div>
 
-        {/* Right Column: Episode selector */}
+        {/* Right Column: Episode selector (TV Series) ATAU Rekomendasi (Film) */}
         <div className="space-y-6">
           <div className="bg-gray-900/50 border border-gray-800/80 rounded-2xl p-5">
             <h2 className="text-lg font-bold text-white mb-4 flex items-center justify-between">
-              <span>Pilih Episode</span>
+              <span>{isFilm ? "Rekomendasi Tontonan" : "Pilih Episode"}</span>
               <span className="text-xs font-normal text-gray-400">
-                {episodes.length} Episode
+                {isFilm
+                  ? `${related.length} Pilihan`
+                  : `${episodes.length} Episode`}
               </span>
             </h2>
 
-            <div className="max-h-[500px] overflow-y-auto pr-1 no-scrollbar space-y-2">
-              <EpisodeList
-                slug={content.slug}
-                episodes={episodes}
-                currentEpisodeSlug={currentEpisode?.slug}
-              />
-            </div>
+            {isFilm ? (
+              <div className="max-h-[520px] overflow-y-auto pr-1 no-scrollbar">
+                {related && related.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    {related.map((item) => (
+                      <ContentCard key={item.id} content={item} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400 py-6 text-center">
+                    Belum ada rekomendasi pilihan.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="max-h-[500px] overflow-y-auto pr-1 no-scrollbar space-y-2">
+                <EpisodeList
+                  slug={content.slug}
+                  episodes={episodes}
+                  currentEpisodeSlug={currentEpisode?.slug}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

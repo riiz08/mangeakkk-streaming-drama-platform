@@ -76,11 +76,22 @@ export default {
 		const contentType =
 			TYPES[ext] || obj.httpMetadata?.contentType || 'application/octet-stream';
 
+		let cacheControl;
+		if (ext === 'm3u8') {
+			cacheControl = 'public, max-age=60';
+		} else if (['ts', 'm4s', 'aac'].includes(ext)) {
+			cacheControl = 'public, max-age=31536000, immutable';
+		} else if (['jpg', 'jpeg', 'png', 'webp', 'avif'].includes(ext)) {
+			cacheControl = 'public, max-age=86400';
+		} else {
+			cacheControl = 'public, max-age=3600';
+		}
+
 		return new Response(request.method === 'HEAD' ? null : obj.body, {
 			headers: {
 				...cors,
 				'Content-Type': contentType,
-				'Cache-Control': ext === 'm3u8' ? 'private, max-age=10' : 'private, max-age=3600',
+				'Cache-Control': cacheControl,
 			},
 		});
 	},
