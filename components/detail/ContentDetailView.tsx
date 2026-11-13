@@ -52,16 +52,8 @@ export default function ContentDetailView({ content, related: initialRelated }: 
               />
             </div>
 
-            {/* Untuk drama ada tombol mulai nonton ep 1, untuk film tombol langsung scroll ke player di bawah */}
-            {isFilm ? (
-              <a
-                href="#player"
-                className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-base transition-all shadow-xl shadow-brand-600/30 hover:scale-[1.02]"
-              >
-                <Play className="w-5 h-5 fill-white" />
-                <span>Putar Film</span>
-              </a>
-            ) : (
+            {/* Tombol mulai nonton ep 1 hanya untuk drama; untuk film pemutar video sudah otomatis tampil di bawah */}
+            {!isFilm && (
               <Link
                 href={watchUrl}
                 className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-base transition-all shadow-xl shadow-brand-600/30 hover:scale-[1.02]"

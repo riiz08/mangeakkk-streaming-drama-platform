@@ -71,12 +71,12 @@ export async function createContentAction(data: ContentFormData) {
             data.cast && data.cast.length > 0
               ? data.cast.map((c) => ({
                 name: c.name,
-                photo: c.photo || defaultPoster,
+                photo: c.photo || "/images/avatar.jpg",
               }))
               : [
                 {
                   name: "Pemeran Utama",
-                  photo: defaultPoster,
+                  photo: "/images/avatar.jpg",
                 },
               ],
         },
@@ -147,7 +147,7 @@ export async function updateContentAction(id: string, data: ContentFormData) {
 
     // Sync cast if provided
     if (data.cast && data.cast.length > 0) {
-      await prisma.cast.deleteMany({
+      await prisma.castMember.deleteMany({
         where: { contentId: id },
       });
     }
@@ -176,7 +176,7 @@ export async function updateContentAction(id: string, data: ContentFormData) {
             ? {
               create: data.cast.map((c) => ({
                 name: c.name,
-                photo: c.photo || defaultPoster,
+                photo: c.photo || "/images/avatar.jpg",
               })),
             }
             : undefined,
