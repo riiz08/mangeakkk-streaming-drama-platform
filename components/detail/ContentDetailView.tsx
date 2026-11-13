@@ -7,6 +7,7 @@ import { Content, getRelatedContents } from "@/lib/data/mock";
 import BadgeLabel from "@/components/ui/BadgeLabel";
 import EpisodeList from "@/components/ui/EpisodeList";
 import ContentCard from "@/components/ui/ContentCard";
+import VideoPlayer from "@/components/ui/VideoPlayer";
 
 interface ContentDetailViewProps {
   content: Content;
@@ -17,12 +18,9 @@ export default function ContentDetailView({ content, related: initialRelated }: 
   if (!content) notFound();
 
   const related = initialRelated || getRelatedContents(content);
-  // Drama goes to /[slug]/episode-1, Film goes to /[slug]/watch
+  const isFilm = content.type === "film";
   const firstEpisodeSlug = content.episodes?.[0]?.slug || "episode-1";
-  const watchUrl =
-    content.type === "tv-series"
-      ? `/${content.slug}/${firstEpisodeSlug}`
-      : `/${content.slug}/watch`;
+  const watchUrl = `/${content.slug}/${firstEpisodeSlug}`;
 
   return (
     <div className="pb-16">
@@ -54,15 +52,24 @@ export default function ContentDetailView({ content, related: initialRelated }: 
               />
             </div>
 
-            <Link
-              href="https://uplcm.com/4/12250281"
-              className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-base transition-all shadow-xl shadow-brand-600/30 hover:scale-[1.02]"
-            >
-              <Play className="w-5 h-5 fill-white" />
-              <span>
-                {content.type === "tv-series" ? "Mulai Nonton (Ep 1)" : "Tonton Film Sekarang"}
-              </span>
-            </Link>
+            {/* Untuk drama ada tombol mulai nonton ep 1, untuk film tombol langsung scroll ke player di bawah */}
+            {isFilm ? (
+              <a
+                href="#player"
+                className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-base transition-all shadow-xl shadow-brand-600/30 hover:scale-[1.02]"
+              >
+                <Play className="w-5 h-5 fill-white" />
+                <span>Putar Film</span>
+              </a>
+            ) : (
+              <Link
+                href={watchUrl}
+                className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-base transition-all shadow-xl shadow-brand-600/30 hover:scale-[1.02]"
+              >
+                <Play className="w-5 h-5 fill-white" />
+                <span>Mulai Nonton (Ep 1)</span>
+              </Link>
+            )}
           </div>
 
           {/* Right: Info Details */}
@@ -157,8 +164,31 @@ export default function ContentDetailView({ content, related: initialRelated }: 
           </div>
         </div>
 
-        {/* 3. Khusus DRAMA: Daftar Episode */}
-        {content.type === "tv-series" && content.episodes && content.episodes.length > 0 && (
+        {/* 3. Khusus FILM: Video Player langsung di bawah detail film */}
+        {isFilm && (
+          <div id="player" className="mt-12 pt-8 border-t border-gray-800/80 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+                <span className="w-1.5 h-6 bg-brand-600 rounded-full inline-block" />
+                Pemutar Film
+              </h2>
+              <span className="text-xs text-brand-400 font-medium bg-brand-600/10 border border-brand-500/20 px-2.5 py-1 rounded-lg">
+                Kualitas HD
+              </span>
+            </div>
+
+            <div className="w-full aspect-video rounded-2xl overflow-hidden border border-gray-800 bg-black shadow-2xl">
+              <VideoPlayer
+                videoUrl={content.videoUrl || ""}
+                poster={content.backdrop || content.poster}
+                title={content.title}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 4. Khusus DRAMA: Daftar Episode */}
+        {!isFilm && content.episodes && content.episodes.length > 0 && (
           <div className="mt-10 pt-8 border-t border-gray-800/80">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
