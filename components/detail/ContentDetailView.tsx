@@ -7,7 +7,6 @@ import { Content, getRelatedContents } from "@/lib/data/mock";
 import BadgeLabel from "@/components/ui/BadgeLabel";
 import EpisodeList from "@/components/ui/EpisodeList";
 import ContentCard from "@/components/ui/ContentCard";
-import VideoPlayer from "@/components/ui/VideoPlayer";
 
 interface ContentDetailViewProps {
   content: Content;
@@ -18,12 +17,12 @@ export default function ContentDetailView({ content, related: initialRelated }: 
   if (!content) notFound();
 
   const related = initialRelated || getRelatedContents(content);
-  // Drama goes to /[slug]/episode-1, Film plays right here or links
+  // Drama goes to /[slug]/episode-1, Film goes to /[slug]/watch
   const firstEpisodeSlug = content.episodes?.[0]?.slug || "episode-1";
   const watchUrl =
     content.type === "tv-series"
       ? `/${content.slug}/${firstEpisodeSlug}`
-      : `#player`;
+      : `/${content.slug}/watch`;
 
   return (
     <div className="pb-16">
@@ -158,24 +157,7 @@ export default function ContentDetailView({ content, related: initialRelated }: 
           </div>
         </div>
 
-        {/* 3. Khusus FILM: Embed Video Player Langsung di Halaman Ini */}
-        {content.type === "film" && (
-          <div id="player" className="mt-10 pt-8 border-t border-gray-800/80">
-            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-6 bg-brand-600 rounded-full inline-block" />
-              Putar Film
-            </h2>
-            <div className="max-w-4xl">
-              <VideoPlayer
-                videoUrl={content.videoUrl || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"}
-                poster={content.backdrop}
-                title={content.title}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* 4. Khusus DRAMA: Daftar Episode */}
+        {/* 3. Khusus DRAMA: Daftar Episode */}
         {content.type === "tv-series" && content.episodes && content.episodes.length > 0 && (
           <div className="mt-10 pt-8 border-t border-gray-800/80">
             <div className="flex items-center justify-between mb-6">

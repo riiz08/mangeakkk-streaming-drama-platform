@@ -110,6 +110,7 @@ export async function createContentAction(data: ContentFormData) {
     revalidatePath(`/${content.slug}`);
 
     if (data.type === "film") {
+      revalidatePath(`/${content.slug}/watch`);
       revalidatePath(`/${content.slug}/streaming`);
     } else if (data.episodes) {
       for (const ep of data.episodes) {
@@ -143,6 +144,13 @@ export async function updateContentAction(id: string, data: ContentFormData) {
       });
     }
 
+    // Sync cast if provided
+    if (data.cast && data.cast.length > 0) {
+      await prisma.cast.deleteMany({
+        where: { contentId: id },
+      });
+    }
+
     const content = await prisma.content.update({
       where: { id },
       data: {
@@ -162,6 +170,15 @@ export async function updateContentAction(id: string, data: ContentFormData) {
         hasNewEpisode: Boolean(data.hasNewEpisode),
         isPilihan: Boolean(data.isPilihan),
         isFeatured: Boolean(data.isFeatured),
+        cast:
+          data.cast && data.cast.length > 0
+            ? {
+                create: data.cast.map((c) => ({
+                  name: c.name,
+                  photo: c.photo || defaultPoster,
+                })),
+              }
+            : undefined,
         episodes:
           data.type === "tv-series" && data.episodes && data.episodes.length > 0
             ? {
@@ -192,6 +209,7 @@ export async function updateContentAction(id: string, data: ContentFormData) {
     revalidatePath(`/${content.slug}`);
 
     if (data.type === "film") {
+      revalidatePath(`/${content.slug}/watch`);
       revalidatePath(`/${content.slug}/streaming`);
     } else if (data.episodes) {
       for (const ep of data.episodes) {
