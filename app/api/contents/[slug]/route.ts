@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getContentBySlug, getRelatedContents } from "@/lib/data/db";
 
-export const revalidate = 86400; // 24 jam cache di edge
+export const revalidate = 2592000; // 30 hari cache di edge
 
 export async function GET(
   request: Request,
@@ -36,4 +36,3 @@ export async function GET(
     );
   }
 }
-

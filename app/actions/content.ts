@@ -1,9 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { MOCK_CONTENTS } from "@/lib/data/mock";
 import { getSignedPosterUrl, getSignedVideoUrl } from "@/lib/signed-url";
+import { purgeCloudflare } from "@/lib/cache/purge";
 
 export interface ContentFormData {
   title: string;
@@ -102,6 +103,15 @@ export async function createContentAction(data: ContentFormData) {
       },
     });
 
+    // 1. Revalidasi data cache tags (lapisan Next.js unstable_cache)
+    revalidateTag("contents");
+    revalidateTag(`content:${content.slug}`);
+    revalidateTag("featured");
+    if (data.type === "tv-series") revalidateTag("list:drama");
+    if (data.type === "film") revalidateTag("list:film");
+    if (data.isTrending) revalidateTag("list:trending");
+
+    // 2. Revalidasi route paths (lapisan Next.js ISR)
     revalidatePath("/");
     revalidatePath("/drama");
     revalidatePath("/film");
@@ -111,13 +121,27 @@ export async function createContentAction(data: ContentFormData) {
     revalidatePath(`/api/contents/${content.slug}`);
     revalidatePath(`/${content.slug}`);
 
+    const purgeUrls = [
+      "/",
+      "/drama",
+      "/film",
+      "/api/contents",
+      `/api/contents/${content.slug}`,
+      `/${content.slug}`,
+    ];
+
     if (data.type === "film") {
       revalidatePath(`/${content.slug}`);
     } else if (data.episodes) {
       for (const ep of data.episodes) {
-        revalidatePath(`/${content.slug}/${ep.slug || `episode-${ep.number}`}`);
+        const epPath = `/${content.slug}/${ep.slug || `episode-${ep.number}`}`;
+        revalidatePath(epPath);
+        purgeUrls.push(epPath);
       }
     }
+
+    // 3. Purge Cloudflare Edge Cache otomatis
+    purgeCloudflare(purgeUrls).catch((e) => console.warn("Cloudflare purge error:", e));
 
     return { success: true, data: content };
   } catch (error: any) {
@@ -202,6 +226,15 @@ export async function updateContentAction(id: string, data: ContentFormData) {
       },
     });
 
+    // 1. Revalidasi data cache tags (lapisan Next.js unstable_cache)
+    revalidateTag("contents");
+    revalidateTag(`content:${content.slug}`);
+    revalidateTag("featured");
+    if (data.type === "tv-series") revalidateTag("list:drama");
+    if (data.type === "film") revalidateTag("list:film");
+    if (data.isTrending) revalidateTag("list:trending");
+
+    // 2. Revalidasi route paths (lapisan Next.js ISR)
     revalidatePath("/");
     revalidatePath("/drama");
     revalidatePath("/film");
@@ -211,13 +244,27 @@ export async function updateContentAction(id: string, data: ContentFormData) {
     revalidatePath(`/api/contents/${content.slug}`);
     revalidatePath(`/${content.slug}`);
 
+    const purgeUrls = [
+      "/",
+      "/drama",
+      "/film",
+      "/api/contents",
+      `/api/contents/${content.slug}`,
+      `/${content.slug}`,
+    ];
+
     if (data.type === "film") {
       revalidatePath(`/${content.slug}`);
     } else if (data.episodes) {
       for (const ep of data.episodes) {
-        revalidatePath(`/${content.slug}/${ep.slug || `episode-${ep.number}`}`);
+        const epPath = `/${content.slug}/${ep.slug || `episode-${ep.number}`}`;
+        revalidatePath(epPath);
+        purgeUrls.push(epPath);
       }
     }
+
+    // 3. Purge Cloudflare Edge Cache otomatis
+    purgeCloudflare(purgeUrls).catch((e) => console.warn("Cloudflare purge error:", e));
 
     return { success: true, data: content };
   } catch (error: any) {
@@ -232,16 +279,30 @@ export async function deleteContentAction(id: string) {
       where: { id },
     });
 
+    // 1. Revalidasi data cache tags
+    revalidateTag("contents");
+    if (content.slug) {
+      revalidateTag(`content:${content.slug}`);
+    }
+
+    // 2. Revalidasi paths
     revalidatePath("/");
     revalidatePath("/drama");
     revalidatePath("/film");
     revalidatePath("/search");
     revalidatePath("/admin");
     revalidatePath("/api/contents");
+
+    const purgeUrls = ["/", "/drama", "/film", "/api/contents"];
+
     if (content.slug) {
       revalidatePath(`/api/contents/${content.slug}`);
       revalidatePath(`/${content.slug}`);
+      purgeUrls.push(`/api/contents/${content.slug}`, `/${content.slug}`);
     }
+
+    // 3. Purge Cloudflare Edge Cache otomatis
+    purgeCloudflare(purgeUrls).catch((e) => console.warn("Cloudflare purge error:", e));
 
     return { success: true, data: content };
   } catch (error: any) {
@@ -341,10 +402,15 @@ export async function seedDefaultContentsAction() {
       }
     }
 
+    revalidateTag("contents");
     revalidatePath("/");
     revalidatePath("/drama");
     revalidatePath("/film");
     revalidatePath("/admin");
+
+    purgeCloudflare(["/", "/drama", "/film", "/api/contents"]).catch((e) =>
+      console.warn("Cloudflare purge error:", e)
+    );
 
     return { success: true, message: "Data bawaan berhasil disinkronkan ke database!" };
   } catch (error: any) {
@@ -352,4 +418,3 @@ export async function seedDefaultContentsAction() {
     return { success: false, error: error.message || "Gagal mengisi data bawaan." };
   }
 }
-

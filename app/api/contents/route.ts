@@ -21,6 +21,13 @@ export async function GET(request: Request) {
 
     if (q) {
       data = await searchContents(q);
+      // Untuk search query, s-maxage lebih pendek (5 menit)
+      return NextResponse.json(data, {
+        status: 200,
+        headers: {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
+        },
+      });
     } else if (filter === "featured") {
       data = await getFeaturedContent();
     } else if (filter === "trending") {
@@ -46,4 +53,3 @@ export async function GET(request: Request) {
     );
   }
 }
-
