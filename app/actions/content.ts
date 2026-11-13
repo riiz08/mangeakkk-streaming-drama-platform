@@ -70,34 +70,34 @@ export async function createContentAction(data: ContentFormData) {
           create:
             data.cast && data.cast.length > 0
               ? data.cast.map((c) => ({
-                  name: c.name,
-                  photo: c.photo || defaultPoster,
-                }))
+                name: c.name,
+                photo: c.photo || defaultPoster,
+              }))
               : [
-                  {
-                    name: "Pemeran Utama",
-                    photo: defaultPoster,
-                  },
-                ],
+                {
+                  name: "Pemeran Utama",
+                  photo: defaultPoster,
+                },
+              ],
         },
         episodes:
           data.type === "tv-series" && data.episodes && data.episodes.length > 0
             ? {
-                create: data.episodes.map((ep) => {
-                  const epSlug = ep.slug || `episode-${ep.number}`;
-                  const epPath = `${cleanContentSlug}/${epSlug}`;
-                  return {
-                    number: ep.number,
-                    slug: epSlug,
-                    title: ep.title || `Episode ${ep.number}`,
-                    thumbnail: ep.thumbnail || defaultPoster,
-                    duration: ep.duration || "60m",
-                    synopsis: ep.synopsis || `Episode ${ep.number} serial ${data.title}.`,
-                    videoUrl:
-                      ep.videoUrl?.trim() || getSignedVideoUrl(epPath, "index.m3u8"),
-                  };
-                }),
-              }
+              create: data.episodes.map((ep) => {
+                const epSlug = ep.slug || `episode-${ep.number}`;
+                const epPath = `${cleanContentSlug}/${epSlug}`;
+                return {
+                  number: ep.number,
+                  slug: epSlug,
+                  title: ep.title || `Episode ${ep.number}`,
+                  thumbnail: ep.thumbnail || defaultPoster,
+                  duration: ep.duration || "60m",
+                  synopsis: ep.synopsis || `Episode ${ep.number} serial ${data.title}.`,
+                  videoUrl:
+                    ep.videoUrl?.trim() || getSignedVideoUrl(epPath, "index.m3u8"),
+                };
+              }),
+            }
             : undefined,
       },
     });
@@ -107,11 +107,12 @@ export async function createContentAction(data: ContentFormData) {
     revalidatePath("/film");
     revalidatePath("/search");
     revalidatePath("/admin");
+    revalidatePath("/api/contents");
+    revalidatePath(`/api/contents/${content.slug}`);
     revalidatePath(`/${content.slug}`);
 
     if (data.type === "film") {
-      revalidatePath(`/${content.slug}/watch`);
-      revalidatePath(`/${content.slug}/streaming`);
+      revalidatePath(`/${content.slug}`);
     } else if (data.episodes) {
       for (const ep of data.episodes) {
         revalidatePath(`/${content.slug}/${ep.slug || `episode-${ep.number}`}`);
@@ -173,30 +174,30 @@ export async function updateContentAction(id: string, data: ContentFormData) {
         cast:
           data.cast && data.cast.length > 0
             ? {
-                create: data.cast.map((c) => ({
-                  name: c.name,
-                  photo: c.photo || defaultPoster,
-                })),
-              }
+              create: data.cast.map((c) => ({
+                name: c.name,
+                photo: c.photo || defaultPoster,
+              })),
+            }
             : undefined,
         episodes:
           data.type === "tv-series" && data.episodes && data.episodes.length > 0
             ? {
-                create: data.episodes.map((ep) => {
-                  const epSlug = ep.slug || `episode-${ep.number}`;
-                  const epPath = `${cleanContentSlug}/${epSlug}`;
-                  return {
-                    number: ep.number,
-                    slug: epSlug,
-                    title: ep.title || `Episode ${ep.number}`,
-                    thumbnail: ep.thumbnail || defaultPoster,
-                    duration: ep.duration || "60m",
-                    synopsis: ep.synopsis || `Episode ${ep.number} serial ${data.title}.`,
-                    videoUrl:
-                      ep.videoUrl?.trim() || getSignedVideoUrl(epPath, "index.m3u8"),
-                  };
-                }),
-              }
+              create: data.episodes.map((ep) => {
+                const epSlug = ep.slug || `episode-${ep.number}`;
+                const epPath = `${cleanContentSlug}/${epSlug}`;
+                return {
+                  number: ep.number,
+                  slug: epSlug,
+                  title: ep.title || `Episode ${ep.number}`,
+                  thumbnail: ep.thumbnail || defaultPoster,
+                  duration: ep.duration || "60m",
+                  synopsis: ep.synopsis || `Episode ${ep.number} serial ${data.title}.`,
+                  videoUrl:
+                    ep.videoUrl?.trim() || getSignedVideoUrl(epPath, "index.m3u8"),
+                };
+              }),
+            }
             : undefined,
       },
     });
@@ -206,11 +207,12 @@ export async function updateContentAction(id: string, data: ContentFormData) {
     revalidatePath("/film");
     revalidatePath("/search");
     revalidatePath("/admin");
+    revalidatePath("/api/contents");
+    revalidatePath(`/api/contents/${content.slug}`);
     revalidatePath(`/${content.slug}`);
 
     if (data.type === "film") {
-      revalidatePath(`/${content.slug}/watch`);
-      revalidatePath(`/${content.slug}/streaming`);
+      revalidatePath(`/${content.slug}`);
     } else if (data.episodes) {
       for (const ep of data.episodes) {
         revalidatePath(`/${content.slug}/${ep.slug || `episode-${ep.number}`}`);
@@ -235,7 +237,9 @@ export async function deleteContentAction(id: string) {
     revalidatePath("/film");
     revalidatePath("/search");
     revalidatePath("/admin");
+    revalidatePath("/api/contents");
     if (content.slug) {
+      revalidatePath(`/api/contents/${content.slug}`);
       revalidatePath(`/${content.slug}`);
     }
 
@@ -321,16 +325,16 @@ export async function seedDefaultContentsAction() {
             },
             episodes: item.episodes
               ? {
-                  create: item.episodes.map((ep) => ({
-                    number: ep.number,
-                    slug: ep.slug,
-                    title: ep.title,
-                    thumbnail: ep.thumbnail,
-                    duration: ep.duration,
-                    synopsis: ep.synopsis,
-                    videoUrl: ep.videoUrl,
-                  })),
-                }
+                create: item.episodes.map((ep) => ({
+                  number: ep.number,
+                  slug: ep.slug,
+                  title: ep.title,
+                  thumbnail: ep.thumbnail,
+                  duration: ep.duration,
+                  synopsis: ep.synopsis,
+                  videoUrl: ep.videoUrl,
+                })),
+              }
               : undefined,
           },
         });

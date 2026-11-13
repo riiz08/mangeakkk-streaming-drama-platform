@@ -2,18 +2,14 @@ import React from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import WatchView from "@/components/player/WatchView";
-import {
-  getContentBySlug,
-  getEpisodeBySlug,
-  getRelatedContents,
-} from "@/lib/data/db";
+import { getContentBySlug, getEpisodeBySlug } from "@/lib/data/db";
 import Script from "next/script";
 
 interface PageProps {
   params: Promise<{ slug: string; episode: string }>;
 }
 
-export const revalidate = 2592000; // Revalidate setiap 30 hari (file HLS tidak berubah setelah upload, on-demand revalidation via server actions)
+export const revalidate = 2592000; // Revalidate setiap 30 hari
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug, episode } = await params;
@@ -21,21 +17,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!content) {
     return {
-      title: "Halaman Tidak Ditemukan — Mangeakkk",
+      title: "Episode Tidak Ditemukan — Mangeakkk",
     };
   }
 
+  // Jika film, tidak seharusnya mengakses sub-path episode
   if (content.type === "film") {
     return {
-      title: `Nonton Film ${content.title} Sub Indo — Mangeakkk`,
-      description:
-        content.synopsis ||
-        `Nonton film bioskop ${content.title} subtitle Indonesia kualitas HD di Mangeakkk.`,
-      openGraph: {
-        title: `${content.title} — Mangeakkk`,
-        description: content.synopsis,
-        images: [{ url: content.backdrop || content.poster }],
-      },
+      title: `${content.title} — Mangeakkk`,
     };
   }
 
@@ -55,31 +44,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function WatchPage({ params }: PageProps) {
+export default async function DramaEpisodeWatchPage({ params }: PageProps) {
   const { slug, episode } = await params;
   const content = await getContentBySlug(slug);
 
-  if (!content) {
+  // Jika bukan tv-series atau konten tidak ditemukan, 404 (karena film ditonton di /[slug])
+  if (!content || content.type !== "tv-series") {
     notFound();
   }
 
-  // Jika tipe FILM
-  if (content.type === "film") {
-    const related = await getRelatedContents(content);
-    return (
-      <>
-        <WatchView content={content} related={related} />
-        <Script
-          src="https://quge5.com/88/tag.min.js"
-          data-zone="309368"
-          data-cfasync="false"
-          strategy="afterInteractive"
-        />
-      </>
-    );
-  }
-
-  // Jika tipe TV-SERIES
   const ep = getEpisodeBySlug(content, episode);
   if (!ep) {
     notFound();
