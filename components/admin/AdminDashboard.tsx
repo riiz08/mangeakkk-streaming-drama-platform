@@ -77,7 +77,7 @@ export default function AdminDashboard({ initialContents, stats }: AdminDashboar
   const [formCountry, setFormCountry] = useState("Korea Selatan");
   const [formDirector, setFormDirector] = useState("");
   const [formCast, setFormCast] = useState<{ name: string; photo?: string }[]>([
-    { name: "", photo: "" },
+    { name: "", photo: "/images/avatar.jpg" },
   ]);
   const [formDuration, setFormDuration] = useState("60 min/ep");
   const [formVideoUrl, setFormVideoUrl] = useState("");
@@ -222,7 +222,7 @@ export default function AdminDashboard({ initialContents, stats }: AdminDashboar
   };
 
   const handleAddCastRow = () => {
-    setFormCast([...formCast, { name: "", photo: "" }]);
+    setFormCast([...formCast, { name: "", photo: "/images/avatar.jpg" }]);
   };
 
   const handleRemoveCastRow = (index: number) => {
@@ -246,7 +246,7 @@ export default function AdminDashboard({ initialContents, stats }: AdminDashboar
     setFormYear(new Date().getFullYear());
     setFormCountry("Korea Selatan");
     setFormDirector("");
-    setFormCast([{ name: "", photo: "" }]);
+    setFormCast([{ name: "", photo: "/images/avatar.jpg" }]);
     setFormDuration("60 min/ep");
     setFormVideoUrl("");
     setFormIsTrending(false);
@@ -285,11 +285,11 @@ export default function AdminDashboard({ initialContents, stats }: AdminDashboar
       setFormCast(
         item.cast.map((c) => ({
           name: c.name,
-          photo: c.photo || "",
+          photo: c.photo || "/images/avatar.jpg",
         }))
       );
     } else {
-      setFormCast([{ name: "", photo: "" }]);
+      setFormCast([{ name: "", photo: "/images/avatar.jpg" }]);
     }
 
     if (item.episodes && item.episodes.length > 0) {
@@ -399,7 +399,7 @@ export default function AdminDashboard({ initialContents, stats }: AdminDashboar
         .filter((c) => c.name.trim() !== "")
         .map((c) => ({
           name: c.name.trim(),
-          photo: c.photo?.trim() || undefined,
+          photo: c.photo?.trim() || "/images/avatar.jpg",
         })),
       episodes: formType === "tv-series" ? formEpisodes : undefined,
     };
@@ -1255,7 +1255,7 @@ export default function AdminDashboard({ initialContents, stats }: AdminDashboar
                   Daftar Pemeran (Cast)
                 </label>
                 <p className="text-[11px] text-zinc-500">
-                  Masukkan nama aktor/aktris dan URL foto profil (opsional)
+                  Masukkan nama aktor/aktris (foto profil otomatis memakai avatar default)
                 </p>
               </div>
               <button
@@ -1280,23 +1280,14 @@ export default function AdminDashboard({ initialContents, stats }: AdminDashboar
                       value={c.name}
                       onChange={(e) => handleCastChange(idx, "name", e.target.value)}
                       placeholder={`Nama Pemeran #${idx + 1} (contoh: Kim Soo-hyun)`}
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={c.photo || ""}
-                      onChange={(e) => handleCastChange(idx, "photo", e.target.value)}
-                      placeholder="URL Foto (opsional, default: poster konten)"
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono text-[11px]"
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white placeholder-zinc-500 focus:border-brand-500 focus:outline-none"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={() => handleRemoveCastRow(idx)}
                     disabled={formCast.length <= 1}
-                    className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 rounded-lg text-zinc-500 hover:text-red-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Hapus baris pemeran"
                   >
                     <Trash2 className="w-4 h-4" />
