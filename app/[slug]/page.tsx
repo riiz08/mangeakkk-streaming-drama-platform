@@ -2,7 +2,7 @@ import React from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ContentDetailView from "@/components/detail/ContentDetailView";
-import { getContentBySlug, getRelatedContents } from "@/lib/data/db";
+import { getContentBySlug, getRelatedContents, getAllContents } from "@/lib/data/db";
 import Script from "next/script";
 
 interface PageProps {
@@ -10,6 +10,18 @@ interface PageProps {
 }
 
 export const revalidate = 2592000; // Revalidate setiap 30 hari (metadata konten jarang berubah, on-demand revalidation via server actions)
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  try {
+    const contents = await getAllContents();
+    return contents.slice(0, 30).map((c) => ({
+      slug: c.slug,
+    }));
+  } catch {
+    return [];
+  }
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -54,5 +66,5 @@ export default async function ContentDetailPage({ params }: PageProps) {
         strategy="afterInteractive"
       />
     </>
-  )
+  );
 }

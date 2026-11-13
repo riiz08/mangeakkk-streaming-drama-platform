@@ -19,7 +19,7 @@ interface SearchPageProps {
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const query = params.q || "";
-  const results = query ? await searchContents(query) : [];
+  const initialResults = query ? await searchContents(query) : [];
 
   return (
     <Suspense
@@ -29,7 +29,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         </div>
       }
     >
-      <SearchView query={query} results={results} />
+      <SearchView initialQuery={query} initialResults={initialResults} />
       <Script
         src="https://quge5.com/88/tag.min.js"
         data-zone="309368"

@@ -2,27 +2,61 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, AlertCircle } from "lucide-react";
+import { Search, AlertCircle, Loader2 } from "lucide-react";
 import ContentCard from "@/components/ui/ContentCard";
 import { Content } from "@/lib/data/db";
+import { SkeletonCard } from "@/components/ui/Skeleton";
 
 interface SearchViewProps {
-  query?: string;
-  results?: Content[];
+  initialQuery?: string;
+  initialResults?: Content[];
 }
 
-export default function SearchView({ query = "", results = [] }: SearchViewProps) {
+export default function SearchView({
+  initialQuery = "",
+  initialResults = [],
+}: SearchViewProps) {
   const router = useRouter();
-  const [inputVal, setInputVal] = useState(query);
+  const [query, setQuery] = useState(initialQuery);
+  const [inputVal, setInputVal] = useState(initialQuery);
+  const [results, setResults] = useState<Content[]>(initialResults);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    setInputVal(query);
-  }, [query]);
+    setInputVal(initialQuery);
+    setQuery(initialQuery);
+    setResults(initialResults);
+  }, [initialQuery, initialResults]);
+
+  // Client-side fetch ke API cache saat query berubah
+  const performSearch = async (searchTerm: string) => {
+    const q = searchTerm.trim();
+    if (!q) {
+      setResults([]);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/contents?q=${encodeURIComponent(q)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setResults(data);
+      }
+    } catch (err) {
+      console.warn("Gagal mencari konten:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputVal.trim()) {
-      router.push(`/search?q=${encodeURIComponent(inputVal.trim())}`);
+    const clean = inputVal.trim();
+    if (clean) {
+      setQuery(clean);
+      router.push(`/search?q=${encodeURIComponent(clean)}`, { scroll: false });
+      performSearch(clean);
     }
   };
 
@@ -46,8 +80,10 @@ export default function SearchView({ query = "", results = [] }: SearchViewProps
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <button
             type="submit"
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 px-4 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs sm:text-sm font-semibold transition-colors"
+            disabled={isLoading}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 px-4 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs sm:text-sm font-semibold transition-colors flex items-center gap-1.5"
           >
+            {isLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
             Cari
           </button>
         </form>
@@ -66,7 +102,13 @@ export default function SearchView({ query = "", results = [] }: SearchViewProps
           )}
         </div>
 
-        {results.length > 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+            {[...Array(10)].map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : results.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
             {results.map((item) => (
               <ContentCard key={item.id} content={item} />

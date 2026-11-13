@@ -2,7 +2,7 @@ import React from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import WatchView from "@/components/player/WatchView";
-import { getContentBySlug, getEpisodeBySlug } from "@/lib/data/db";
+import { getContentBySlug, getEpisodeBySlug, getDramaList } from "@/lib/data/db";
 import Script from "next/script";
 
 interface PageProps {
@@ -10,6 +10,29 @@ interface PageProps {
 }
 
 export const revalidate = 2592000; // Revalidate setiap 30 hari
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  try {
+    const dramas = await getDramaList();
+    const paramsList: { slug: string; episode: string }[] = [];
+
+    // Pre-render popular dramas' first few episodes
+    for (const drama of dramas.slice(0, 10)) {
+      if (drama.episodes) {
+        for (const ep of drama.episodes.slice(0, 3)) {
+          paramsList.push({
+            slug: drama.slug,
+            episode: ep.slug,
+          });
+        }
+      }
+    }
+    return paramsList;
+  } catch {
+    return [];
+  }
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug, episode } = await params;

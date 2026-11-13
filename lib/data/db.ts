@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { MOCK_CONTENTS } from "@/lib/data/mock";
 import { resolvePosterUrl, resolveVideoUrl } from "@/lib/signed-url";
+import { unstable_cache } from "next/cache";
 
 export interface CastMember {
   id?: string;
@@ -84,10 +85,11 @@ export function formatContent(item: any): Content {
   };
 }
 
-/**
- * Fetch all content items from the database
- */
-export async function getAllContents(): Promise<Content[]> {
+// ==========================================
+// UNCACHED INTERNAL QUERIES
+// ==========================================
+
+async function _rawGetAllContents(): Promise<Content[]> {
   try {
     const list = await prisma.content.findMany({
       include: {
@@ -105,10 +107,7 @@ export async function getAllContents(): Promise<Content[]> {
   return MOCK_CONTENTS;
 }
 
-/**
- * Fetch a single content item by its unique slug
- */
-export async function getContentBySlug(slug: string): Promise<Content | null> {
+async function _rawGetContentBySlug(slug: string): Promise<Content | null> {
   try {
     const item = await prisma.content.findUnique({
       where: { slug },
@@ -127,10 +126,7 @@ export async function getContentBySlug(slug: string): Promise<Content | null> {
   return fallback || null;
 }
 
-/**
- * Fetch all drama / TV series
- */
-export async function getDramaList(): Promise<Content[]> {
+async function _rawGetDramaList(): Promise<Content[]> {
   try {
     const list = await prisma.content.findMany({
       where: { type: "tv-series" },
@@ -149,10 +145,7 @@ export async function getDramaList(): Promise<Content[]> {
   return MOCK_CONTENTS.filter((c) => c.type === "tv-series");
 }
 
-/**
- * Fetch all movies (film)
- */
-export async function getFilmList(): Promise<Content[]> {
+async function _rawGetFilmList(): Promise<Content[]> {
   try {
     const list = await prisma.content.findMany({
       where: { type: "film" },
@@ -171,10 +164,7 @@ export async function getFilmList(): Promise<Content[]> {
   return MOCK_CONTENTS.filter((c) => c.type === "film");
 }
 
-/**
- * Fetch trending items (isTrending: true)
- */
-export async function getTrendingList(): Promise<Content[]> {
+async function _rawGetTrendingList(): Promise<Content[]> {
   try {
     const list = await prisma.content.findMany({
       where: { isTrending: true },
@@ -193,10 +183,7 @@ export async function getTrendingList(): Promise<Content[]> {
   return MOCK_CONTENTS.filter((c) => c.isTrending);
 }
 
-/**
- * Fetch contents with new episodes (hasNewEpisode: true)
- */
-export async function getNewEpisodesList(): Promise<Content[]> {
+async function _rawGetNewEpisodesList(): Promise<Content[]> {
   try {
     const list = await prisma.content.findMany({
       where: { hasNewEpisode: true },
@@ -215,10 +202,7 @@ export async function getNewEpisodesList(): Promise<Content[]> {
   return MOCK_CONTENTS.filter((c) => c.hasNewEpisode);
 }
 
-/**
- * Fetch curated/editor choice items (isPilihan: true)
- */
-export async function getPilihanList(): Promise<Content[]> {
+async function _rawGetPilihanList(): Promise<Content[]> {
   try {
     const list = await prisma.content.findMany({
       where: { isPilihan: true },
@@ -237,10 +221,7 @@ export async function getPilihanList(): Promise<Content[]> {
   return MOCK_CONTENTS.filter((c) => c.isPilihan);
 }
 
-/**
- * Fetch featured hero content
- */
-export async function getFeaturedContent(): Promise<Content | null> {
+async function _rawGetFeaturedContent(): Promise<Content | null> {
   try {
     const item = await prisma.content.findFirst({
       where: { isFeatured: true },
@@ -269,10 +250,7 @@ export async function getFeaturedContent(): Promise<Content | null> {
   return MOCK_CONTENTS.find((c) => c.isFeatured) || MOCK_CONTENTS[0] || null;
 }
 
-/**
- * Search content by keywords
- */
-export async function searchContents(query: string): Promise<Content[]> {
+async function _rawSearchContents(query: string): Promise<Content[]> {
   const q = query.trim();
   if (!q) return [];
 
@@ -309,10 +287,7 @@ export async function searchContents(query: string): Promise<Content[]> {
   );
 }
 
-/**
- * Get related content
- */
-export async function getRelatedContents(content: Content): Promise<Content[]> {
+async function _rawGetRelatedContents(content: Content): Promise<Content[]> {
   try {
     const list = await prisma.content.findMany({
       where: {
@@ -335,9 +310,73 @@ export async function getRelatedContents(content: Content): Promise<Content[]> {
   return MOCK_CONTENTS.filter((c) => c.id !== content.id && c.type === content.type);
 }
 
-/**
- * Get an episode from content by episode slug
- */
+// ==========================================
+// CACHED DATA LAYER (unstable_cache with tags)
+// ==========================================
+
+export const getAllContents = unstable_cache(
+  _rawGetAllContents,
+  ["all-contents"],
+  { revalidate: 86400, tags: ["contents"] }
+);
+
+export const getContentBySlug = (slug: string) =>
+  unstable_cache(
+    () => _rawGetContentBySlug(slug),
+    [`content-by-slug-${slug}`],
+    { revalidate: 86400 * 30, tags: ["contents", `content:${slug}`] }
+  )();
+
+export const getDramaList = unstable_cache(
+  _rawGetDramaList,
+  ["drama-list"],
+  { revalidate: 86400, tags: ["contents", "list:drama"] }
+);
+
+export const getFilmList = unstable_cache(
+  _rawGetFilmList,
+  ["film-list"],
+  { revalidate: 86400, tags: ["contents", "list:film"] }
+);
+
+export const getTrendingList = unstable_cache(
+  _rawGetTrendingList,
+  ["trending-list"],
+  { revalidate: 86400, tags: ["contents", "list:trending"] }
+);
+
+export const getNewEpisodesList = unstable_cache(
+  _rawGetNewEpisodesList,
+  ["new-episodes-list"],
+  { revalidate: 86400, tags: ["contents", "list:new-episodes"] }
+);
+
+export const getPilihanList = unstable_cache(
+  _rawGetPilihanList,
+  ["pilihan-list"],
+  { revalidate: 86400, tags: ["contents", "list:pilihan"] }
+);
+
+export const getFeaturedContent = unstable_cache(
+  _rawGetFeaturedContent,
+  ["featured-content"],
+  { revalidate: 86400, tags: ["contents", "featured"] }
+);
+
+export const searchContents = (query: string) =>
+  unstable_cache(
+    () => _rawSearchContents(query),
+    [`search-contents-${query.toLowerCase().trim()}`],
+    { revalidate: 300, tags: ["search"] }
+  )();
+
+export const getRelatedContents = (content: Content) =>
+  unstable_cache(
+    () => _rawGetRelatedContents(content),
+    [`related-contents-${content.id}`],
+    { revalidate: 86400 * 7, tags: ["contents", `content:${content.slug}`] }
+  )();
+
 export function getEpisodeBySlug(content: Content, episodeSlug: string): Episode | undefined {
   if (!content.episodes) return undefined;
   return content.episodes.find((ep) => ep.slug === episodeSlug);
@@ -356,7 +395,7 @@ export interface AdminStats {
 }
 
 /**
- * Fetch realtime statistics for the admin dashboard
+ * Fetch realtime statistics for the admin dashboard (uncached or short-lived)
  */
 export async function getAdminStats(): Promise<AdminStats> {
   try {
@@ -424,4 +463,3 @@ export async function getAdminStats(): Promise<AdminStats> {
     };
   }
 }
-
