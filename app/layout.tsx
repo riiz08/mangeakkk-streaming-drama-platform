@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { Analytics } from "@vercel/analytics/next"
 
 export const metadata: Metadata = {
   title: "Mangeakkk — Nonton Streaming Drama & Film Subtitle Indonesia",
@@ -38,6 +39,7 @@ export default function RootLayout({
         <Navbar />
         <main className="flex-1 w-full">{children}</main>
         <Footer />
+        <Analytics />
       </body>
     </html>
   );
