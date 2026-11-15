@@ -3,7 +3,6 @@ import { Metadata } from "next";
 import SearchView from "@/components/search/SearchView";
 import { SkeletonRow } from "@/components/ui/Skeleton";
 import { searchContents } from "@/lib/data/db";
-import Script from "next/script";
 
 export const revalidate = 86400; // Revalidate setiap 24 jam (1 hari), on-demand revalidation via server actions
 
@@ -30,12 +29,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       }
     >
       <SearchView initialQuery={query} initialResults={initialResults} />
-      <Script
-        src="https://quge5.com/88/tag.min.js"
-        data-zone="309368"
-        data-cfasync="false"
-        strategy="afterInteractive"
-      />
     </Suspense>
   );
 }
