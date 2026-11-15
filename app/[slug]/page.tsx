@@ -3,7 +3,6 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ContentDetailView from "@/components/detail/ContentDetailView";
 import { getContentBySlug, getRelatedContents, getAllContents } from "@/lib/data/db";
-import Script from "next/script";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -56,15 +55,5 @@ export default async function ContentDetailPage({ params }: PageProps) {
 
   const related = await getRelatedContents(content);
 
-  return (
-    <>
-      <ContentDetailView content={content} related={related} />
-      <Script
-        src="https://quge5.com/88/tag.min.js"
-        data-zone="309368"
-        data-cfasync="false"
-        strategy="afterInteractive"
-      />
-    </>
-  );
+  return <ContentDetailView content={content} related={related} />;
 }
