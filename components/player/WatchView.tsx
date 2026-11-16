@@ -9,6 +9,8 @@ import VideoPlayer from "@/components/ui/VideoPlayer";
 import EpisodeList from "@/components/ui/EpisodeList";
 import ContentCard from "@/components/ui/ContentCard";
 import BadgeLabel from "@/components/ui/BadgeLabel";
+import StickyAd from "../ads/StickyAd";
+import AdBanner from "../ads/AdBanner";
 
 interface WatchViewProps {
   content: Content;
@@ -68,6 +70,23 @@ export default function WatchView({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+      <StickyAd position="top" buttonPosition="bottom" />
+      <StickyAd />
+
+      <div className="grid gap-y-1 grid-cols-1 md:grid-cols-2 gap-4">
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+      </div>
+
       {/* Back button & Title header */}
       <div className="flex items-center justify-between mb-4">
         <Link
@@ -78,12 +97,13 @@ export default function WatchView({
           <span>Kembali ke Detail {content.title}</span>
         </Link>
 
+
         <div className="flex items-center gap-2">
           <button
             onClick={() => setBookmarked(!bookmarked)}
             className={`p-2 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition-colors ${bookmarked
-                ? "bg-brand-600/20 border-brand-500/50 text-brand-400"
-                : "bg-gray-900 border-gray-800 text-gray-300 hover:text-white"
+              ? "bg-brand-600/20 border-brand-500/50 text-brand-400"
+              : "bg-gray-900 border-gray-800 text-gray-300 hover:text-white"
               }`}
           >
             <Bookmark className={`w-4 h-4 ${bookmarked ? "fill-brand-400" : ""}`} />

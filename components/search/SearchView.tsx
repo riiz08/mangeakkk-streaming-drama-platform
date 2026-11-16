@@ -6,6 +6,8 @@ import { Search, AlertCircle, Loader2 } from "lucide-react";
 import ContentCard from "@/components/ui/ContentCard";
 import { Content } from "@/lib/data/db";
 import { SkeletonCard } from "@/components/ui/Skeleton";
+import AdBanner from "../ads/AdBanner";
+import StickyAd from "../ads/StickyAd";
 
 interface SearchViewProps {
   initialQuery?: string;
@@ -89,6 +91,23 @@ export default function SearchView({
         </form>
       </div>
 
+      <StickyAd position="top" buttonPosition="bottom" />
+      <StickyAd />
+
+
+      <div className="grid gap-y-1 grid-cols-1 md:grid-cols-2 gap-4">
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+      </div>
+
       {/* Results Section */}
       <div>
         <div className="flex items-center justify-between text-xs sm:text-sm text-gray-400 mb-6">
@@ -128,6 +147,6 @@ export default function SearchView({
           </div>
         ) : null}
       </div>
-    </div>
+    </div >
   );
 }
