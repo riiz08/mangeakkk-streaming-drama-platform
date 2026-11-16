@@ -8,6 +8,8 @@ import BadgeLabel from "@/components/ui/BadgeLabel";
 import EpisodeList from "@/components/ui/EpisodeList";
 import ContentCard from "@/components/ui/ContentCard";
 import VideoPlayer from "@/components/ui/VideoPlayer";
+import AdBanner from "../ads/AdBanner";
+import StickyAd from "../ads/StickyAd";
 
 interface ContentDetailViewProps {
   content: Content;
@@ -36,6 +38,9 @@ export default function ContentDetailView({ content, related: initialRelated }: 
         <div className="absolute inset-0 bg-gradient-to-t from-[#0b0f19] via-[#0b0f19]/70 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#0b0f19] via-[#0b0f19]/60 to-transparent" />
       </div>
+
+      <StickyAd position="top" buttonPosition="bottom" />
+      <StickyAd />
 
       {/* 2. Main Content Card */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-44 sm:-mt-56 relative z-10">
@@ -154,6 +159,19 @@ export default function ContentDetailView({ content, related: initialRelated }: 
               )}
             </div>
           </div>
+        </div>
+
+        <div className="grid gap-y-1 grid-cols-1 md:grid-cols-2 gap-4">
+          <AdBanner type="320x50" />
+          <AdBanner type="320x50" />
+          <AdBanner type="320x50" />
+          <AdBanner type="320x50" />
+          <AdBanner type="320x50" />
+          <AdBanner type="320x50" />
+          <AdBanner type="320x50" />
+          <AdBanner type="320x50" />
+          <AdBanner type="320x50" />
+          <AdBanner type="320x50" />
         </div>
 
         {/* 3. Khusus FILM: Video Player langsung di bawah detail film */}

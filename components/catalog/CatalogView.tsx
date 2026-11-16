@@ -5,6 +5,8 @@ import ContentCard from "@/components/ui/ContentCard";
 import FilterBar from "@/components/ui/FilterBar";
 import { Content } from "@/lib/data/mock";
 import { Film, Tv } from "lucide-react";
+import StickyAd from "../ads/StickyAd";
+import AdBanner from "../ads/AdBanner";
 
 interface CatalogViewProps {
   type: "tv-series" | "film";
@@ -64,6 +66,23 @@ export default function CatalogView({
         selectedSort={selectedSort}
         onSortChange={setSelectedSort}
       />
+
+      <StickyAd position="top" buttonPosition="bottom" />
+      <StickyAd />
+
+      <div className="grid gap-y-1 grid-cols-1 md:grid-cols-2 gap-4">
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+        <AdBanner type="320x50" />
+      </div>
+
 
       {/* Results Count */}
       <div className="flex items-center justify-between text-xs sm:text-sm text-gray-400 mb-6">
