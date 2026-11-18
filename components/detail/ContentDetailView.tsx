@@ -9,7 +9,8 @@ import EpisodeList from "@/components/ui/EpisodeList";
 import ContentCard from "@/components/ui/ContentCard";
 import VideoPlayer from "@/components/ui/VideoPlayer";
 import AdBanner from "../ads/AdBanner";
-import StickyAd from "../ads/StickyAd";
+import ResponsiveAd from "../ads/ResponsiveAd";
+import Popunder from "../ads/Popunder";
 
 interface ContentDetailViewProps {
   content: Content;
@@ -26,6 +27,9 @@ export default function ContentDetailView({ content, related: initialRelated }: 
 
   return (
     <div className="pb-16">
+      {/* Popunder dengan frequency capping (hanya trigger saat user berinteraksi) */}
+      <Popunder />
+
       {/* 1. Backdrop Banner */}
       <div className="relative w-full h-[360px] sm:h-[460px] lg:h-[520px] overflow-hidden">
         <Image
@@ -38,9 +42,6 @@ export default function ContentDetailView({ content, related: initialRelated }: 
         <div className="absolute inset-0 bg-gradient-to-t from-[#0b0f19] via-[#0b0f19]/70 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#0b0f19] via-[#0b0f19]/60 to-transparent" />
       </div>
-
-      <StickyAd position="top" buttonPosition="bottom" />
-      <StickyAd />
 
       {/* 2. Main Content Card */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-44 sm:-mt-56 relative z-10">
@@ -161,22 +162,12 @@ export default function ContentDetailView({ content, related: initialRelated }: 
           </div>
         </div>
 
-        <div className="grid gap-y-1 grid-cols-1 md:grid-cols-2 gap-4">
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-        </div>
+        {/* 1. Native Ad Banner 4:1 di bawah detail info konten */}
+        <AdBanner type="native-4:1" className="max-w-5xl my-10" />
 
         {/* 3. Khusus FILM: Video Player langsung di bawah detail film */}
         {isFilm && (
-          <div id="player" className="mt-12 pt-8 border-t border-gray-800/80 space-y-4">
+          <div id="player" className="mt-8 pt-8 border-t border-gray-800/80 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
                 <span className="w-1.5 h-6 bg-brand-600 rounded-full inline-block" />
@@ -199,7 +190,7 @@ export default function ContentDetailView({ content, related: initialRelated }: 
 
         {/* 4. Khusus DRAMA: Daftar Episode */}
         {!isFilm && content.episodes && content.episodes.length > 0 && (
-          <div className="mt-10 pt-8 border-t border-gray-800/80">
+          <div className="mt-8 pt-8 border-t border-gray-800/80">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
                 <span className="w-1.5 h-6 bg-brand-600 rounded-full inline-block" />
@@ -214,9 +205,12 @@ export default function ContentDetailView({ content, related: initialRelated }: 
           </div>
         )}
 
+        {/* 2. Responsive Ad Banner (728x90 Desktop / 320x50 Mobile) di bawah episode/player */}
+        <ResponsiveAd className="my-8" />
+
         {/* 5. Rekomendasi Terkait */}
         {related.length > 0 && (
-          <div className="mt-14 pt-8 border-t border-gray-800/80">
+          <div className="mt-10 pt-8 border-t border-gray-800/80">
             <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-6 flex items-center gap-2">
               <span className="w-1.5 h-6 bg-brand-600 rounded-full inline-block" />
               Rekomendasi Serupa

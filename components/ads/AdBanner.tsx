@@ -11,6 +11,7 @@ export interface AdBannerProps {
 export default function AdBanner({ type, className = "" }: AdBannerProps) {
   const config = ADSTERRA_CONFIGS[type];
   const [mounted, setMounted] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const uniqueId = useId();
 
@@ -39,6 +40,10 @@ export default function AdBanner({ type, className = "" }: AdBannerProps) {
       iframe.setAttribute("allowtransparency", "true");
       iframe.setAttribute("loading", "lazy");
       iframe.title = `Advertisement ${config.label}`;
+
+      iframe.onload = () => {
+        setLoaded(true);
+      };
 
       container.appendChild(iframe);
 
@@ -90,7 +95,42 @@ export default function AdBanner({ type, className = "" }: AdBannerProps) {
       script.async = true;
       script.setAttribute("data-cfasync", "false");
       script.src = config.scriptUrl;
+      script.onload = () => {
+        setLoaded(true);
+      };
       container.appendChild(script);
+
+      // Fallback timer jika script native tidak memicu onload
+      const timer = setTimeout(() => {
+        setLoaded(true);
+      }, 1500);
+
+      return () => {
+        clearTimeout(timer);
+        if (container) {
+          container.innerHTML = "";
+        }
+      };
+    } else if (config.format === "script") {
+      const script = document.createElement("script");
+      script.async = true;
+      script.setAttribute("data-cfasync", "false");
+      script.src = config.scriptUrl;
+      script.onload = () => {
+        setLoaded(true);
+      };
+      container.appendChild(script);
+
+      const timer = setTimeout(() => {
+        setLoaded(true);
+      }, 1500);
+
+      return () => {
+        clearTimeout(timer);
+        if (container) {
+          container.innerHTML = "";
+        }
+      };
     }
 
     return () => {
@@ -107,7 +147,7 @@ export default function AdBanner({ type, className = "" }: AdBannerProps) {
     return null;
   }
 
-  // Jika format belum tersedia (misal 160x300)
+  // Jika format belum tersedia
   if (!config.isAvailable) {
     if (process.env.NODE_ENV === "development") {
       return (
@@ -126,7 +166,17 @@ export default function AdBanner({ type, className = "" }: AdBannerProps) {
       className={`adsterra-banner relative overflow-hidden mx-auto my-3 ${config.containerClassName || ""} ${className}`}
       data-ad-type={type}
       id={`adsterra-${type}-${uniqueId}`}
+      style={{
+        minHeight: config.height ? `${config.height}px` : undefined,
+        minWidth: config.width ? `${config.width}px` : undefined,
+      }}
     >
+      {/* Visual placeholder untuk anti-layout shift (CLS) saat menunggu data iklan */}
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-900/40 border border-gray-800/40 rounded-lg animate-pulse text-[10px] text-gray-500 font-medium tracking-wider uppercase select-none pointer-events-none">
+          <span>Advertisement</span>
+        </div>
+      )}
       <div ref={containerRef} className="w-full h-full flex justify-center items-center" />
     </div>
   );
