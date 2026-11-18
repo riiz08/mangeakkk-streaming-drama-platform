@@ -9,8 +9,10 @@ import VideoPlayer from "@/components/ui/VideoPlayer";
 import EpisodeList from "@/components/ui/EpisodeList";
 import ContentCard from "@/components/ui/ContentCard";
 import BadgeLabel from "@/components/ui/BadgeLabel";
-import StickyAd from "../ads/StickyAd";
 import AdBanner from "../ads/AdBanner";
+import ResponsiveAd from "../ads/ResponsiveAd";
+import StickyAd from "../ads/StickyAd";
+import Popunder from "../ads/Popunder";
 
 interface WatchViewProps {
   content: Content;
@@ -70,22 +72,11 @@ export default function WatchView({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      {/* Popunder script dengan frequency capping (hanya trigger pada interaksi pertama) */}
+      <Popunder />
 
-      <StickyAd position="top" buttonPosition="bottom" />
-      <StickyAd />
-
-      <div className="grid gap-y-1 grid-cols-1 md:grid-cols-2 gap-4">
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-      </div>
+      {/* Sticky ad khusus mobile dengan delay 5 detik dan tombol tutup */}
+      <StickyAd delayMs={5000} />
 
       {/* Back button & Title header */}
       <div className="flex items-center justify-between mb-4">
@@ -97,14 +88,14 @@ export default function WatchView({
           <span>Kembali ke Detail {content.title}</span>
         </Link>
 
-
         <div className="flex items-center gap-2">
           <button
             onClick={() => setBookmarked(!bookmarked)}
-            className={`p-2 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition-colors ${bookmarked
-              ? "bg-brand-600/20 border-brand-500/50 text-brand-400"
-              : "bg-gray-900 border-gray-800 text-gray-300 hover:text-white"
-              }`}
+            className={`p-2 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition-colors ${
+              bookmarked
+                ? "bg-brand-600/20 border-brand-500/50 text-brand-400"
+                : "bg-gray-900 border-gray-800 text-gray-300 hover:text-white"
+            }`}
           >
             <Bookmark className={`w-4 h-4 ${bookmarked ? "fill-brand-400" : ""}`} />
             <span className="hidden sm:inline">{bookmarked ? "Tersimpan" : "Simpan"}</span>
@@ -123,7 +114,7 @@ export default function WatchView({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-2">
         {/* Left Column: Player & Info (2 cols on large screen) */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Video Player */}
+          {/* Video Player - Tidak dihalangi iklan di atas/sampingnya */}
           <VideoPlayer
             videoUrl={currentVideoUrl}
             poster={
@@ -141,6 +132,9 @@ export default function WatchView({
             onPrevEpisode={handlePrev}
             onNextEpisode={handleNext}
           />
+
+          {/* 1. Native Banner 4:1 diletakkan di bawah player agar tidak mengganggu tontonan */}
+          <AdBanner type="native-4:1" className="w-full my-4" />
 
           {/* Under player info */}
           <div className="bg-gray-900/50 border border-gray-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
@@ -227,6 +221,9 @@ export default function WatchView({
           </div>
         </div>
       </div>
+
+      {/* 2. Responsive Ad Banner (728x90 Desktop / 320x50 Mobile) di bawah area watch & selector */}
+      <ResponsiveAd className="mt-8" />
     </div>
   );
 }

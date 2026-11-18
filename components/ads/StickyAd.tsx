@@ -1,49 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AdBanner from "./AdBanner";
+import { X } from "lucide-react";
 
 interface StickyAdProps {
-    position?: "top" | "bottom";        // posisi iklan di layar
-    buttonPosition?: "top" | "bottom";  // posisi tombol close di kotak iklan
+  delayMs?: number;
 }
 
-const positionClass = {
-    top: "top-0",
-    bottom: "bottom-0",
-};
+export default function StickyAd({ delayMs = 5000 }: StickyAdProps) {
+  const [closed, setClosed] = useState(false);
+  const [visible, setVisible] = useState(false);
 
-const buttonClass = {
-    top: "-top-3",
-    bottom: "-bottom-3",
-};
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setVisible(true);
+    }, delayMs);
 
-export default function StickyAd({
-    position = "bottom",
-    buttonPosition = "top",
-}: StickyAdProps) {
-    const [closed, setClosed] = useState(false);
+    return () => clearTimeout(timer);
+  }, [delayMs]);
 
-    if (closed) return null;
+  if (closed || !visible) return null;
 
-    return (
-        <div
-            className={`fixed ${positionClass[position]} z-50 bg-black/20 px-2 py-2 inset-x-0 mx-auto w-fit`}
+  return (
+    <div className="fixed bottom-0 inset-x-0 z-50 md:hidden flex flex-col items-center justify-center bg-gray-950/90 backdrop-blur-md border-t border-gray-800/80 py-2 px-3 shadow-2xl transition-all duration-300">
+      <div className="relative w-fit flex items-center justify-center">
+        <button
+          onClick={() => setClosed(true)}
+          aria-label="Tutup iklan"
+          className="absolute -top-4 right-0 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 shadow-lg transition-transform hover:scale-110 flex items-center justify-center z-10"
         >
-            <button
-                onClick={() => setClosed(true)}
-                aria-label="Tutup iklan"
-                className={`absolute ${buttonClass[buttonPosition]} inset-x-0 mx-auto w-fit p-1 rounded-md bg-red-600 text-white text-sm leading-6 shadow`}
-            >
-                Tutup Iklan
-            </button>
+          <X className="w-3.5 h-3.5" />
+        </button>
 
-            <div className="mx-auto grid gap-x-1 max-w-5xl grid-cols-2">
-                <AdBanner type="320x50" />
-                <AdBanner type="320x50" />
-                <AdBanner type="320x50" />
-                <AdBanner type="320x50" />
-            </div>
+        <div className="flex justify-center items-center overflow-hidden">
+          <AdBanner type="320x50" className="!my-0" />
         </div>
-    );
+      </div>
+    </div>
+  );
 }

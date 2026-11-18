@@ -10,7 +10,8 @@ import {
 } from "@/lib/data/db";
 import { Tv, Film, Sparkles } from "lucide-react";
 import AdBanner from "@/components/ads/AdBanner";
-import StickyAd from "@/components/ads/StickyAd";
+import ResponsiveAd from "@/components/ads/ResponsiveAd";
+import SocialBanner from "@/components/ads/SocialBanner";
 
 export const revalidate = 86400; // Revalidate setiap 24 jam (1 hari), on-demand revalidation via server actions
 
@@ -22,27 +23,13 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <StickyAd position="top" buttonPosition="bottom" />
-      <StickyAd />
       {/* Hero Section */}
       {featured && <HeroSection content={featured} />}
 
       {/* Main Content Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 pb-12">
-
-        {/* Ads place */}
-        <div className="grid gap-y-1 grid-cols-1 md:grid-cols-2 gap-4">
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-          <AdBanner type="320x50" />
-        </div>
+        {/* 1. Native Ad Banner 4:1 (Blend harmonis dengan konten) */}
+        <AdBanner type="native-4:1" className="max-w-5xl" />
 
         {/* Trending Section */}
         <ContentRow
@@ -52,8 +39,6 @@ export default async function HomePage() {
           viewAllHref="/drama"
         />
 
-
-
         {/* Drama Terbaru */}
         <ContentRow
           title="Drama & TV Series Terbaru"
@@ -61,6 +46,9 @@ export default async function HomePage() {
           items={dramas}
           viewAllHref="/drama"
         />
+
+        {/* 2. Responsive Ad Banner (728x90 Desktop / 320x50 Mobile) */}
+        <ResponsiveAd />
 
         {/* Film Terbaru */}
         <ContentRow
@@ -128,6 +116,9 @@ export default async function HomePage() {
             </Link>
           </div>
         </section>
+
+        {/* 3. Social Banner */}
+        <SocialBanner />
       </div>
     </div>
   );

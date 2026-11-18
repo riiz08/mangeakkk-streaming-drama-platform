@@ -5,8 +5,8 @@ import ContentCard from "@/components/ui/ContentCard";
 import FilterBar from "@/components/ui/FilterBar";
 import { Content } from "@/lib/data/mock";
 import { Film, Tv } from "lucide-react";
-import StickyAd from "../ads/StickyAd";
 import AdBanner from "../ads/AdBanner";
+import ResponsiveAd from "../ads/ResponsiveAd";
 
 interface CatalogViewProps {
   type: "tv-series" | "film";
@@ -42,6 +42,9 @@ export default function CatalogView({
 
   const Icon = type === "tv-series" ? Tv : Film;
 
+  const firstBatch = filteredItems.slice(0, 8);
+  const secondBatch = filteredItems.slice(8);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       {/* Page Header */}
@@ -67,22 +70,8 @@ export default function CatalogView({
         onSortChange={setSelectedSort}
       />
 
-      <StickyAd position="top" buttonPosition="bottom" />
-      <StickyAd />
-
-      <div className="grid gap-y-1 grid-cols-1 md:grid-cols-2 gap-4">
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-      </div>
-
+      {/* 1. Native Banner 4:1 di atas daftar konten */}
+      <AdBanner type="native-4:1" className="max-w-5xl my-6" />
 
       {/* Results Count */}
       <div className="flex items-center justify-between text-xs sm:text-sm text-gray-400 mb-6">
@@ -99,12 +88,25 @@ export default function CatalogView({
         )}
       </div>
 
-      {/* Grid Content */}
+      {/* Grid Content dengan ResponsiveAd di tengah */}
       {filteredItems.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-          {filteredItems.map((item) => (
-            <ContentCard key={item.id} content={item} />
-          ))}
+        <div className="space-y-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+            {firstBatch.map((item) => (
+              <ContentCard key={item.id} content={item} />
+            ))}
+          </div>
+
+          {/* 2. Responsive Ad (728x90 Desktop / 320x50 Mobile) di sela konten */}
+          <ResponsiveAd />
+
+          {secondBatch.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+              {secondBatch.map((item) => (
+                <ContentCard key={item.id} content={item} />
+              ))}
+            </div>
+          )}
         </div>
       ) : (
         <div className="py-20 text-center bg-gray-900/30 rounded-2xl border border-gray-800">

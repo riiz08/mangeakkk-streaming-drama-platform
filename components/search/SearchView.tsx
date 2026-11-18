@@ -6,8 +6,8 @@ import { Search, AlertCircle, Loader2 } from "lucide-react";
 import ContentCard from "@/components/ui/ContentCard";
 import { Content } from "@/lib/data/db";
 import { SkeletonCard } from "@/components/ui/Skeleton";
-import AdBanner from "../ads/AdBanner";
-import StickyAd from "../ads/StickyAd";
+import SocialBanner from "../ads/SocialBanner";
+import ResponsiveAd from "../ads/ResponsiveAd";
 
 interface SearchViewProps {
   initialQuery?: string;
@@ -91,22 +91,8 @@ export default function SearchView({
         </form>
       </div>
 
-      <StickyAd position="top" buttonPosition="bottom" />
-      <StickyAd />
-
-
-      <div className="grid gap-y-1 grid-cols-1 md:grid-cols-2 gap-4">
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-        <AdBanner type="320x50" />
-      </div>
+      {/* 1. Social Banner di atas hasil pencarian */}
+      <SocialBanner className="my-6" />
 
       {/* Results Section */}
       <div>
@@ -128,10 +114,15 @@ export default function SearchView({
             ))}
           </div>
         ) : results.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-            {results.map((item) => (
-              <ContentCard key={item.id} content={item} />
-            ))}
+          <div className="space-y-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+              {results.map((item) => (
+                <ContentCard key={item.id} content={item} />
+              ))}
+            </div>
+
+            {/* 2. Responsive Ad Banner di bawah hasil pencarian */}
+            <ResponsiveAd />
           </div>
         ) : query ? (
           <div className="py-20 text-center bg-gray-900/30 rounded-2xl border border-gray-800 max-w-lg mx-auto p-6">
@@ -147,6 +138,6 @@ export default function SearchView({
           </div>
         ) : null}
       </div>
-    </div >
+    </div>
   );
 }

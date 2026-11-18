@@ -1,5 +1,7 @@
 export type AdBannerType =
   | "native-4:1"
+  | "social"
+  | "popunder"
   | "468x60"
   | "300x250"
   | "160x300"
@@ -10,8 +12,8 @@ export type AdBannerType =
 export interface AdFormatConfig {
   type: AdBannerType;
   label: string;
-  format: "iframe" | "native";
-  key: string;
+  format: "iframe" | "native" | "script";
+  key?: string;
   width?: number;
   height?: number;
   scriptUrl: string;
@@ -22,6 +24,14 @@ export interface AdFormatConfig {
   containerClassName?: string;
 }
 
+export const POPUNDER_CONFIG = {
+  scriptUrl: "https://aarems.org/1/5ed965a8eca7e10ddb8a7695b1a403d6",
+  cooldownMs: 30 * 60 * 1000, // 30 menit interval cooldown
+  maxPerSession: 2, // Maksimal 2x per session tab
+  storageKeyLastTrigger: "mangeakkk_popunder_last_trigger",
+  storageKeySessionCount: "mangeakkk_popunder_session_count",
+};
+
 export const ADSTERRA_CONFIGS: Record<AdBannerType, AdFormatConfig> = {
   "native-4:1": {
     type: "native-4:1",
@@ -31,7 +41,23 @@ export const ADSTERRA_CONFIGS: Record<AdBannerType, AdFormatConfig> = {
     scriptUrl: "https://bancadeltempoidea.org/21/4e7f9cf9b069462c8d8926d8cfb6605e",
     containerId: "container-4e7f9cf9b069462c8d8926d8cfb6605e",
     isAvailable: true,
-    containerClassName: "w-full min-h-[90px] sm:min-h-[120px]",
+    containerClassName: "w-full min-h-[100px] sm:min-h-[120px]",
+  },
+  social: {
+    type: "social",
+    label: "Social Banner",
+    format: "script",
+    scriptUrl: "https://bancadeltempoidea.org/14/df932e42b9f0b6120f52b2d8801f428a",
+    isAvailable: true,
+    containerClassName: "w-full min-h-[60px] sm:min-h-[80px]",
+  },
+  popunder: {
+    type: "popunder",
+    label: "Popunder",
+    format: "script",
+    scriptUrl: "https://aarems.org/1/5ed965a8eca7e10ddb8a7695b1a403d6",
+    isAvailable: true,
+    containerClassName: "hidden",
   },
   "468x60": {
     type: "468x60",
