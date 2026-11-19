@@ -111,6 +111,11 @@ export function isWorkerOrR2Url(url: string): boolean {
 }
 
 /**
+ * Modern semantic alias for isWorkerOrR2Url
+ */
+export const isMediaUrl = isWorkerOrR2Url;
+
+/**
  * Generate direct media HLS video URL:
  * Format: {BASE}/videos/{slug}/index.m3u8
  * Format Episode: {BASE}/videos/{drama-slug}/{episode-slug}/index.m3u8
@@ -179,6 +184,13 @@ export function getSignedUrlForKey(storageKey: string): string {
 
   return `${base}/videos/${cleanKey}`;
 }
+
+/**
+ * Modern semantic aliases
+ */
+export const getMediaVideoUrl = getSignedVideoUrl;
+export const getMediaPosterUrl = getSignedPosterUrl;
+export const getMediaUrlForKey = getSignedUrlForKey;
 
 /**
  * Smart resolver for poster / backdrop image URLs.

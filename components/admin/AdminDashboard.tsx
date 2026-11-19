@@ -703,7 +703,7 @@ export default function AdminDashboard({ initialContents, stats }: AdminDashboar
             </div>
           </div>
 
-          {/* Cloudflare R2 & Worker Integration Guide Card */}
+          {/* Cloudflare R2 & Media URL Integration Guide Card */}
           <div className="p-6 rounded-2xl bg-gradient-to-r from-zinc-900/90 via-zinc-900/60 to-zinc-900/90 border border-zinc-800 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -1033,7 +1033,7 @@ export default function AdminDashboard({ initialContents, stats }: AdminDashboar
         </div>
       )}
 
-      {/* TAB 3: FORM INPUT / EDIT KONTEN WITH AUTO SIGNED URLS */}
+      {/* TAB 3: FORM INPUT / EDIT KONTEN WITH AUTO MEDIA URLS */}
       {activeTab === "create" && (
         <form
           onSubmit={handleSaveContent}

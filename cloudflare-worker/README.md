@@ -1,23 +1,43 @@
-# Panduan Setup Cloudflare Worker untuk Signed URL R2
+# Panduan Arsitektur & URL Media Cloudflare R2
 
-File `worker.js` ini adalah implementasi Cloudflare Worker yang memverifikasi signature HMAC-SHA256 untuk mengakses video HLS dan poster dari Cloudflare R2 secara aman tanpa token expiration.
+Repository ini menggunakan custom domain Cloudflare R2 langsung untuk distribusi video HLS dan gambar poster:
+```
+https://media.tengokfull.web.id
+```
 
-## 1. Setup di Cloudflare Dashboard
+## 1. Format URL Media Langsung
 
-1. Buka dashboard Cloudflare: **Workers & Pages** -> Pilih worker Anda (misal `hls-worker`).
-2. Masuk ke tab **Settings** -> **Variables and Secrets**:
-   - Tambahkan Secret: `VIDEO_SECRET` dengan nilai yang sama persis seperti di `.env` aplikasi Next.js.
-3. Masuk ke tab **Settings** -> **R2 Bucket Bindings**:
-   - Tambahkan binding dengan Variable Name: `R2_BUCKET`.
-   - Pilih R2 bucket yang menyimpan video & poster (`mangeakkk`).
-4. Salin kode dari `worker.js` dan paste ke editor Worker, lalu klik **Deploy**.
+File disimpan di Cloudflare R2 bucket `mangeakkk` dan dapat diakses publik melalui custom domain:
 
-## 2. Format URL yang Didukung
+- **Manifest HLS Film**: `https://media.tengokfull.web.id/videos/{slug}/index.m3u8`
+- **Manifest HLS Drama (Episode)**: `https://media.tengokfull.web.id/videos/{drama-slug}/{episode-slug}/index.m3u8`
+- **Poster Gambar**: `https://media.tengokfull.web.id/videos/{slug}/poster.jpg`
+- **Thumbnail Episode**: `https://media.tengokfull.web.id/videos/{drama-slug}/{episode-slug}/poster.jpg`
+- **Segment Video (.ts / .m4s)**: `https://media.tengokfull.web.id/videos/{slug}/segment_001.ts`
 
-- Manifest HLS: `https://hls-worker.riskimhmmd0.workers.dev/{videoId}/{signature}/index.m3u8`
-- Poster Gambar: `https://hls-worker.riskimhmmd0.workers.dev/{videoId}/{signature}/poster.jpg`
-- Segment Video: `https://hls-worker.riskimhmmd0.workers.dev/{videoId}/{signature}/segment_001.ts`
+Struktur folder di R2 bucket:
+```text
+videos/
+  ├── {slug}/
+  │     ├── index.m3u8
+  │     ├── poster.jpg
+  │     └── segment_xxx.ts
+  └── {drama-slug}/
+        ├── poster.jpg
+        ├── episode-1/
+        │     ├── index.m3u8
+        │     └── segment_xxx.ts
+        └── episode-2/
+              ├── index.m3u8
+              └── segment_xxx.ts
+```
 
-Signature dibuat menggunakan formula:
-`sig = HMAC-SHA256(VIDEO_SECRET, videoId)`
+## 2. Cloudflare Worker (Legacy / Optional Proxy)
 
+File `worker.js` adalah implementasi Cloudflare Worker opsional jika diperlukan verifikasi signature HMAC-SHA256 untuk URL terbatas/lama.
+
+Format lama yang didukung oleh Worker legacy:
+- `https://hls-worker.riskimhmmd0.workers.dev/{sig}/{videoId}/index.m3u8`
+- `https://hls-worker.riskimhmmd0.workers.dev/{sig}/{videoId}/poster.jpg`
+
+> **Catatan Kompatibilitas:** Aplikasi Mangeakkk memiliki smart resolver di `lib/signed-url.ts` (`resolveVideoUrl` dan `resolvePosterUrl`) yang secara otomatis mengubah URL worker lama menjadi format `https://media.tengokfull.web.id/videos/{slug}/...` saat runtime.
