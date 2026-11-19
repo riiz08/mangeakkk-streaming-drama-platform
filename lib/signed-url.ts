@@ -1,22 +1,28 @@
 import crypto from "crypto";
 
 /**
- * Default fallback secret key for HMAC SHA256 signing
- * Shared between Next.js server and Cloudflare Worker
+ * Default fallback secret key for HMAC SHA256 signing (preserved for legacy signature support)
  */
 const DEFAULT_SECRET = "riizadminmangeakkk";
-const DEFAULT_WORKER_BASE = "https://hls-worker.riskimhmmd0.workers.dev";
+const DEFAULT_MEDIA_BASE = "https://media.tengokfull.web.id";
 
 /**
- * Get configured Worker base URL without trailing slash
+ * Get configured Media base URL without trailing slash
  */
-export function getWorkerBaseUrl(): string {
+export function getMediaBaseUrl(): string {
   const base =
+    process.env.NEXT_PUBLIC_MEDIA_BASE_URL ||
+    process.env.MEDIA_BASE_URL ||
     process.env.NEXT_PUBLIC_VIDEO_WORKER_BASE_URL ||
     process.env.VIDEO_WORKER_BASE_URL ||
-    DEFAULT_WORKER_BASE;
+    DEFAULT_MEDIA_BASE;
   return base.replace(/\/+$/, "");
 }
+
+/**
+ * Alias for backward compatibility
+ */
+export const getWorkerBaseUrl = getMediaBaseUrl;
 
 /**
  * Get configured secret key for HMAC SHA256 signing
@@ -28,8 +34,6 @@ export function getVideoSecret(): string {
 
 /**
  * Compute HMAC-SHA256 signature for a given videoId / content slug
- * Worker verifies: HMAC-SHA256(SECRET, videoId) where videoId = content slug
- * URL structure: /{sig}/{videoId}/{file...}
  */
 export function signVideoId(videoId: string): string {
   if (!videoId) return "";
@@ -54,7 +58,8 @@ export function verifySignature(videoId: string, signature: string): boolean {
 }
 
 /**
- * Helper to clean/sanitize a content slug
+ * Helper to clean/sanitize a content slug or path
+ * Removes domain, signature hex, and folder prefixes (videos/, posters/)
  */
 export function cleanSlug(rawSlugOrPath: string): string {
   if (!rawSlugOrPath) return "";
@@ -73,13 +78,13 @@ export function cleanSlug(rawSlugOrPath: string): string {
   // Remove leading and trailing slashes
   s = s.replace(/^\/+|\/+$/g, "");
 
-  // If starts with hex sig (64 chars)
+  // If starts with hex sig (64 chars) from old URLs
   const segments = s.split("/");
   if (segments[0] && /^[0-9a-f]{64}$/i.test(segments[0])) {
     segments.shift(); // remove sig
   }
 
-  // Remove legacy "videos/" or "posters/" if present
+  // Remove "videos/" or "posters/" if present
   if (segments[0] === "videos") {
     segments.shift();
   } else if (segments[0] === "posters") {
@@ -90,14 +95,15 @@ export function cleanSlug(rawSlugOrPath: string): string {
 }
 
 /**
- * Check if a URL or path is associated with Cloudflare Worker or R2 bucket
+ * Check if a URL or path is associated with Cloudflare Worker or R2 / Media bucket
  */
 export function isWorkerOrR2Url(url: string): boolean {
   if (!url) return false;
-  const workerBase = getWorkerBaseUrl();
+  const mediaBase = getMediaBaseUrl();
   return (
+    url.includes("media.tengokfull.web.id") ||
     url.includes("hls-worker") ||
-    (Boolean(workerBase) && url.startsWith(workerBase)) ||
+    (Boolean(mediaBase) && url.startsWith(mediaBase)) ||
     url.includes(".r2.dev") ||
     url.startsWith("videos/") ||
     url.startsWith("posters/")
@@ -105,104 +111,81 @@ export function isWorkerOrR2Url(url: string): boolean {
 }
 
 /**
- * Generate signed HLS video URL:
- * Format: {BASE}/{sig}/{slug}/index.m3u8
- * Format Episode: {BASE}/{sig}/{drama-slug}/{episode-slug}/index.m3u8
+ * Generate direct media HLS video URL:
+ * Format: {BASE}/videos/{slug}/index.m3u8
+ * Format Episode: {BASE}/videos/{drama-slug}/{episode-slug}/index.m3u8
  *
  * Contoh:
- * - film: {BASE}/{sig}/film-badut-gendong/index.m3u8
- * - episode: {BASE}/{sig}/queen-of-tears/episode-1/index.m3u8
+ * - film: https://media.tengokfull.web.id/videos/polong-2026/index.m3u8
+ * - episode: https://media.tengokfull.web.id/videos/queen-of-tears/episode-1/index.m3u8
  */
 export function getSignedVideoUrl(
   slugOrPath: string,
   filename = "index.m3u8"
 ): string {
   if (!slugOrPath) return "";
-  const base = getWorkerBaseUrl();
+  const base = getMediaBaseUrl();
   const clean = cleanSlug(slugOrPath);
   const cleanFilename = filename.replace(/^\/+/, "");
 
-  // Pisahkan contentSlug (videoId utama yang di-sign) dan sisa path file
-  const segments = clean.split("/");
-  const contentSlug = segments[0];
-  if (!contentSlug) return "";
-
-  const sig = signVideoId(contentSlug);
-  const remainingPath = segments.slice(1).join("/");
+  if (!clean) return "";
 
   // Jika slugOrPath sudah berakhiran .m3u8 atau .mp4
   if (clean.endsWith(".m3u8") || clean.endsWith(".mp4")) {
-    return `${base}/${sig}/${clean}`;
+    return `${base}/videos/${clean}`;
   }
 
-  if (remainingPath) {
-    return `${base}/${sig}/${contentSlug}/${remainingPath}/${cleanFilename}`;
-  }
-
-  return `${base}/${sig}/${contentSlug}/${cleanFilename}`;
+  return `${base}/videos/${clean}/${cleanFilename}`;
 }
 
 /**
- * Generate signed poster/backdrop image URL:
- * Format: {BASE}/{sig}/{slug}/poster.(jpg|jpeg|png|webp)
+ * Generate direct media poster/backdrop image URL:
+ * Format: {BASE}/videos/{slug}/poster.(jpg|jpeg|png|webp)
  *
  * Contoh:
- * - {BASE}/{sig}/film-badut-gendong/poster.jpg
- * - {BASE}/{sig}/queen-of-tears/poster.jpg
+ * - https://media.tengokfull.web.id/videos/polong-2026/poster.jpg
+ * - https://media.tengokfull.web.id/videos/queen-of-tears/poster.jpg
  */
 export function getSignedPosterUrl(
   slugOrPath: string,
   filename = "poster.jpg"
 ): string {
   if (!slugOrPath) return "";
-  const base = getWorkerBaseUrl();
+  const base = getMediaBaseUrl();
   const clean = cleanSlug(slugOrPath);
   const cleanFilename = filename.replace(/^\/+/, "");
 
-  const segments = clean.split("/");
-  const contentSlug = segments[0];
-  if (!contentSlug) return "";
-
-  const sig = signVideoId(contentSlug);
+  if (!clean) return "";
 
   // Jika clean sudah berakhiran ekstensi gambar
   if (/\.(jpg|jpeg|png|webp|avif)$/i.test(clean)) {
-    return `${base}/${sig}/${clean}`;
+    return `${base}/videos/${clean}`;
   }
 
-  const remainingPath = segments.slice(1).join("/");
-  if (remainingPath) {
-    return `${base}/${sig}/${contentSlug}/${remainingPath}/${cleanFilename}`;
-  }
-
-  return `${base}/${sig}/${contentSlug}/${cleanFilename}`;
+  return `${base}/videos/${clean}/${cleanFilename}`;
 }
 
 /**
- * Generate signed URL for any arbitrary R2 file key
- * Format: {BASE}/{sig}/{r2Key}
+ * Generate direct media URL for arbitrary storage key
+ * Format: {BASE}/videos/{key}
  */
 export function getSignedUrlForKey(storageKey: string): string {
   if (!storageKey) return "";
-  const base = getWorkerBaseUrl();
+  const base = getMediaBaseUrl();
   let cleanKey = storageKey.replace(/^\/+/, "");
   if (cleanKey.startsWith("videos/")) {
     cleanKey = cleanKey.slice("videos/".length);
   }
 
-  const segments = cleanKey.split("/");
-  const contentSlug = segments[0];
-  if (!contentSlug) return "";
-
-  const sig = signVideoId(contentSlug);
-  return `${base}/${sig}/${cleanKey}`;
+  return `${base}/videos/${cleanKey}`;
 }
 
 /**
  * Smart resolver for poster / backdrop image URLs.
- * - If already a signed Worker URL with valid format, return as is.
+ * - If already a valid direct media URL, return as is.
+ * - If legacy signed Worker URL, convert to new format.
  * - If external third-party URL (e.g. Unsplash, TMDB), return as is.
- * - If R2 storage URL, storage key, or slug, return signed poster URL.
+ * - If R2 storage URL, storage key, or slug, return media poster URL.
  */
 export function resolvePosterUrl(
   posterUrlOrId?: string,
@@ -212,16 +195,19 @@ export function resolvePosterUrl(
   const target = (posterUrlOrId || fallbackSlug || "").trim();
   if (!target) return "";
 
-  const workerBase = getWorkerBaseUrl();
+  const mediaBase = getMediaBaseUrl();
 
-  // If already a signed worker URL (contains worker base and valid /{sig}/{slug}/ structure)
-  if (target.startsWith(workerBase)) {
-    const afterBase = target.replace(workerBase, "").replace(/^\/+/, "");
-    const parts = afterBase.split("/");
-    // Format: {sig}/{slug}/... (parts[0] is 64 hex sig)
-    if (parts.length >= 2 && /^[0-9a-f]{64}$/i.test(parts[0])) {
-      return target;
-    }
+  // If already a valid direct media URL with /videos/
+  if (target.startsWith(mediaBase) && target.includes("/videos/")) {
+    return target;
+  }
+
+  // If legacy signed Worker URL, convert to new format
+  if (target.includes("hls-worker.riskimhmmd0.workers.dev") || target.includes("workers.dev")) {
+    const clean = cleanSlug(target);
+    const extMatch = target.match(/([^/]+\.(?:jpg|jpeg|png|webp|avif))$/i);
+    const filename = extMatch ? extMatch[1] : "poster.jpg";
+    return getSignedPosterUrl(clean, filename);
   }
 
   // If external non-R2 URL (Unsplash, TMDB, etc.), preserve original URL
@@ -232,7 +218,6 @@ export function resolvePosterUrl(
     return target;
   }
 
-  // Otherwise, generate signed poster URL using target or fallback
   const targetSlug = fallbackSlug || target;
   const extMatch = target.match(/([^/]+\.(?:jpg|jpeg|png|webp|avif))$/i);
   const filename = extMatch ? extMatch[1] : "poster.jpg";
@@ -242,9 +227,10 @@ export function resolvePosterUrl(
 
 /**
  * Smart resolver for video stream URLs (.m3u8).
- * - If already a signed Worker URL with valid format, return as is.
+ * - If already a valid direct media URL, return as is.
+ * - If legacy signed Worker URL, convert to new format.
  * - If external third-party stream, return as is.
- * - If R2 storage URL, storage key, or slug, return signed HLS URL.
+ * - If R2 storage URL, storage key, or slug, return media HLS URL.
  */
 export function resolveVideoUrl(
   videoUrlOrId?: string,
@@ -254,15 +240,17 @@ export function resolveVideoUrl(
   const target = (videoUrlOrId || fallbackSlug || "").trim();
   if (!target) return "";
 
-  const workerBase = getWorkerBaseUrl();
+  const mediaBase = getMediaBaseUrl();
 
-  // If already a signed worker URL (contains worker base and valid /{sig}/{slug}/ structure)
-  if (target.startsWith(workerBase)) {
-    const afterBase = target.replace(workerBase, "").replace(/^\/+/, "");
-    const parts = afterBase.split("/");
-    if (parts.length >= 2 && /^[0-9a-f]{64}$/i.test(parts[0])) {
-      return target;
-    }
+  // If already a valid direct media URL with /videos/
+  if (target.startsWith(mediaBase) && target.includes("/videos/")) {
+    return target;
+  }
+
+  // If legacy signed Worker URL, convert to new format
+  if (target.includes("hls-worker.riskimhmmd0.workers.dev") || target.includes("workers.dev")) {
+    const clean = cleanSlug(target);
+    return getSignedVideoUrl(clean);
   }
 
   // If external non-R2 URL, preserve original URL
